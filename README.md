@@ -2,17 +2,15 @@
   
 # ✨ SVG Grab Pro ✨
 
-**The easiest way to extract SVG logos from any website**
+**The designer's essential tool for extracting SVG logos from any website**
 
-[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/placeholder.svg?style=flat-square)](https://chrome.google.com/webstore/detail/placeholder)
-[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/placeholder.svg?style=flat-square)](https://chrome.google.com/webstore/detail/placeholder)
+[![Status](https://img.shields.io/badge/status-beta-blueviolet.svg?style=flat-square)](https://github.com/ash-uxi/svg-grab-pro)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Made with Love](https://img.shields.io/badge/made%20with-♥-ff69b4.svg?style=flat-square)](https://ashuxi.com)
 
-<img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/icon128.png" width="128" height="128" alt="SVG Grab Pro Logo">
+<img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/dark/icon128.png" width="128" height="128" alt="SVG Grab Pro Logo">
 
-**Copy and download SVG logos with a simple right-click**
-
-[✨ Install](#installation) • [🚀 Features](#features) • [🔍 How It Works](#how-it-works) • [🛠️ Tech Stack](#tech-stack)
+**Grab SVG logos with a simple right-click — no more digging through code**
 
 </div>
 
@@ -20,123 +18,60 @@
 
 ## 🌟 Overview
 
-**SVG Grab Pro** is a lightweight Chrome extension that makes it incredibly easy to extract SVG logos and icons from any website. Simply right-click on an SVG element, and a sleek custom menu appears, allowing you to copy or download the SVG with a single click.
+**SVG Grab Pro** is the hassle-free way to extract SVG logos and icons from websites. As a designer, you've been there—admiring a clean SVG logo only to waste time inspecting elements or digging through source code. 
+
+This extension solves that frustration in seconds:
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/screenshot.png" width="600" alt="SVG Grab Pro in action">
 </div>
 
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 🎯 **Smart Logo Detection** | Automatically identifies logos and icons on websites |
-| 🔍 **Right-Click Menu** | Elegant custom context menu for SVG elements |
-| 📋 **Copy to Clipboard** | Instantly copy complete SVG code with all styles preserved |
-| 💾 **One-Click Download** | Save SVGs directly to your computer with proper formatting |
-| 🌓 **Dark & Light Themes** | Adapts to your preferred browser theme |
-| 📱 **Touch-Friendly** | Works great on touch-enabled devices |
-
 ## 🚀 Installation
 
-<details>
-<summary>📦 From Chrome Web Store (Recommended)</summary>
+Since we're currently in beta (not yet on Chrome Web Store), follow these simple steps:
 
-1. Visit the [SVG Grab Pro page](https://chrome.google.com/webstore/detail/placeholder) on Chrome Web Store
-2. Click "Add to Chrome"
-3. Confirm by clicking "Add extension"
+<details open>
+<summary>📦 Installation Steps (Super Simple)</summary>
 
-</details>
+1. **Download the extension**:
+   - Click the green **Code** button above
+   - Select **Download ZIP**
+   - Extract the ZIP file to a folder on your computer
 
-<details>
-<summary>💻 Manual Installation (Developer Mode)</summary>
+2. **Install in Chrome**:
+   - Type `chrome://extensions` in your address bar
+   - Turn on **Developer mode** (toggle in top-right)
+   - Click **Load unpacked**
+   - Select the folder you extracted
 
-1. Download or clone this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" (toggle in top-right corner)
-4. Click "Load unpacked" and select the extension directory
-5. SVG Grab Pro is now installed and ready to use!
+3. **You're all set!**
+   - SVG Grab Pro will appear in your extensions
+   - See our quick guide below to start grabbing SVGs
 
 </details>
 
 ## 🔍 How It Works
 
-SVG Grab Pro uses a sophisticated scoring system to identify SVG logos on websites:
+**For everyone, regardless of technical background:**
 
-1. **Find an SVG**: Browse to any website with SVG logos or icons
-2. **Right-click**: When you right-click on an SVG, our extension analyzes it 
-3. **Use the menu**: If it's detected as a logo, our custom menu appears
-4. **Copy or Download**: Choose your preferred action
-5. **Instant results**: The SVG is ready to use in your projects!
+1. Visit any website with SVG logos
+2. Right-click on a logo
+3. Choose "Copy SVG" or "Download SVG"
+4. Use the SVG in your designs or code
 
-```js
-// SVG detection example (simplified)
-function isLikelyLogo(element) {
-  let score = 0;
-  
-  // Base score for being an SVG
-  if (element.tagName.toLowerCase() === 'svg') {
-    score += 15;
-    
-    // Check size, position, parent elements, etc.
-    // ... more detection logic ...
-    
-    // Consider it a logo if score is high enough
-    return score >= 40;
-  }
-  
-  return false;
-}
-```
+Behind the scenes, we use a smart scoring system to identify logos, extract all the styling information, and deliver a perfectly formatted SVG.
 
-## 🛠️ Tech Stack
+## 🎨 Icons
 
-- **JavaScript**: Vanilla JS for maximum performance
-- **Chrome Extension API**: Built on Manifest V3
-- **Modern CSS**: Clean, adaptive styling with CSS variables
-- **SVG Processing**: Smart extraction with style preservation
-
-## 🔮 Future Enhancements
-
-<details>
-<summary>Click to see what's coming next!</summary>
-
-- [ ] Background image SVG extraction
-- [ ] Preview before copying/downloading
-- [ ] Custom filename for downloads
-- [ ] SVG to PNG conversion option
-- [ ] Batch extraction of multiple SVGs
-- [ ] Extension settings page
-- [ ] Keyboard shortcuts
-
-</details>
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-
-- Report bugs 🐛
-- Suggest features ✨
-- Submit pull requests 🚀
-
-Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Credits
-
-- Beautiful icons from [Pika Icons](https://pikaicons.com/) 
-- Built with ❤️ by [Ashish Kashyap](https://github.com/ash-uxi)
+Beautiful icons used in this project are from [Pika Icons](https://pikaicons.com/).
 
 ---
 
 <div align="center">
-  <p>If you find SVG Grab Pro useful, please consider giving it a ⭐ on GitHub!</p>
+  <p>If SVG Grab Pro saves you time, I'd appreciate a ⭐ on GitHub!</p>
   <p>
     <a href="https://twitter.com/Ash_uxi">Twitter</a> •
-    <a href="https://github.com/ash-uxi">GitHub</a> •
-    <a href="https://x.com/Ash_uxi">X (Twitter)</a>
+    <a href="https://ashuxi.com">Personal Website</a> •
+    <a href="https://github.com/ash-uxi">GitHub</a>
   </p>
 </div>
