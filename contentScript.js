@@ -11,7 +11,7 @@ const themeVariables = `
     --svg-grab-pro-text-primary-light: #1A1C1F;
     --svg-grab-pro-text-secondary-light: #2c3e50;
     --svg-grab-pro-border-light: rgba(15, 16, 18, 0.12);
-    --svg-grab-pro-shadow-light: 0px 1px 1px -0.5px rgba(15, 16, 18, 0.12);
+    --svg-grab-pro-shadow-light: 0px 24px 24px -12px rgba(9, 10, 11, 0.06);
     --svg-grab-pro-hover-light: rgba(15, 16, 18, 0.04);
     --svg-grab-pro-menu-border-light: #f1f1f1;
     --svg-grab-pro-stroke-light: #1A1C1F;
@@ -22,7 +22,7 @@ const themeVariables = `
     --svg-grab-pro-text-primary-dark: #F5F5F7;
     --svg-grab-pro-text-secondary-dark: rgba(255, 255, 255, 0.8);
     --svg-grab-pro-border-dark: rgba(255, 255, 255, 0.08);
-    --svg-grab-pro-shadow-dark: 0px 1px 1px -0.5px rgba(0, 0, 0, 0.3);
+    --svg-grab-pro-shadow-dark: 0px 24px 24px -12px rgba(0, 0, 0, 0.2);
     --svg-grab-pro-hover-dark: rgba(255, 255, 255, 0.04);
     --svg-grab-pro-menu-border-dark: rgba(255, 255, 255, 0.1);
     --svg-grab-pro-stroke-dark: #F5F5F7;
@@ -145,8 +145,9 @@ function createCustomContextMenu() {
   customContextMenu.className = 'svg-grab-pro-context-menu';
   customContextMenu.style.cssText = `
     position: fixed;
-    width: auto;
-    padding: 2px;
+    width: 100%;
+    height: 100%;
+    padding: 4px;
     background: var(--svg-grab-pro-bg);
     box-shadow: var(--svg-grab-pro-shadow);
     overflow: hidden;
@@ -156,7 +157,7 @@ function createCustomContextMenu() {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    gap: 1px;
+    gap: 2px;
     font-family: Inter, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Arial, sans-serif;
     transition: opacity 0.15s ease-out, transform 0.15s ease-out;
   `;
@@ -177,7 +178,7 @@ function createCustomContextMenu() {
       align-self: stretch;
       padding: 6px;
       overflow: hidden;
-      border-radius: 6px;
+      border-radius: 4px;
       display: flex;
       justify-content: flex-start;
       align-items: center;
@@ -191,9 +192,9 @@ function createCustomContextMenu() {
     
     .menu-text {
       color: var(--svg-grab-pro-text-primary);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 500;
-      line-height: 16px;
+      line-height: 18px;
       word-wrap: break-word;
     }
     
@@ -306,6 +307,10 @@ function showCustomContextMenu(x, y) {
   customContextMenu.style.top = `${y}px`;
   customContextMenu.style.display = 'flex';
   customContextMenu.style.animation = 'svgGrabProFadeIn 0.15s ease-out';
+  
+  // Set dimensions based on content
+  customContextMenu.style.width = 'auto';
+  customContextMenu.style.height = 'auto';
   
   // Check if menu goes beyond right edge
   const menuRect = customContextMenu.getBoundingClientRect();
