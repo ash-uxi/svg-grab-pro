@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Globo",
+  "version": "1.0.0",
+  "description": "Copy or download SVG logos from websites with a right-click",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "clipboardWrite"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

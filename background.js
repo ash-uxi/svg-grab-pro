@@ -1,0 +1,15 @@
+// Background script is now minimal since we're handling everything in the content script
+// We'll keep basic message handling for potential future functionality
+
+// Listen for messages from content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.status) {
+    console.log(`[Globo Extension] ${message.status}`);
+  }
+  return true;
+});
+
+// Log when extension is installed or updated
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('Globo SVG Grabber extension installed successfully');
+});
