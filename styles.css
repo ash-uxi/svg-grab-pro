@@ -1,58 +1,260 @@
-/* Main styles for SVG Grab Pro extension */
+:root {
+    /* Base colors - unified color palette */
+    --color-black: #1A1C1F;
+    --color-white: #FBFBFB;
+    --color-gray-100: #F1F1F1;
+    --color-gray-200: #E0E0E0;
+    --color-gray-300: #C0C0C0;
+    --color-gray-400: #A0A0A0;
+    --color-gray-500: #808080;
+    --color-gray-600: #606060;
+    --color-gray-700: #404040;
+    --color-gray-800: #303030;
+    --color-gray-900: #212226;
+    
+    /* Opacity values */
+    --opacity-low: 0.1;
+    --opacity-medium: 0.4;
+    --opacity-high: 0.7;
+    
+    /* Light theme semantic variables */
+    --bg-color: var(--color-white);
+    --text-color: var(--color-black);
+    --secondary-text-color: rgba(0, 0, 0, var(--opacity-high));
+    --footer-text-color: #4D4D4D;
+    --footer-text-hover-color: var(--color-black);
+    --card-bg-color: white;
+    --toggle-bg-color: rgba(9, 10, 11, 0.06);
+    --toggle-active-bg: white;
+    --toggle-active-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    --icon-stroke: var(--color-black);
+    --icon-stroke-secondary: rgba(15, 16, 18, 0.50);
+    --border-color: rgba(0, 0, 0, var(--opacity-low));
+    --card-shadow: 0px 0px 0px 1px rgba(9, 10, 11, 0.06), 
+                  0px 1px 1px -0.5px rgba(9, 10, 11, 0.06), 
+                  0px 3px 3px -1.5px rgba(9, 10, 11, 0.06), 
+                  0px 6px 6px -3px rgba(9, 10, 11, 0.06);
+    --instruction-number-color: var(--color-black);
 
+    /* Light theme variables */
+    --background: #F5F5F7;
+    --text: #1D1D1F;
+    --text-secondary: rgba(0, 0, 0, 0.65);
+    --text-tertiary: rgba(0, 0, 0, 0.45);
+    --card-bg: #FFFFFF;
+    --card-shadow: 0px 0px 0px 0.5px rgba(0, 0, 0, 0.05), 
+                  0px 2px 8px -2px rgba(0, 0, 0, 0.1);
+    --outline: rgba(0, 0, 0, 0.10);
+    --toggle-bg: rgba(0, 0, 0, 0.06);
+    --icon-stroke: #1D1D1F;
+    --icon-stroke-secondary: rgba(0, 0, 0, 0.65);
+    --opacity-medium: 0.28;
+}
+
+/* Dark theme variables */
+.dark-theme {
+    --bg-color: var(--color-black);
+    --text-color: var(--color-white);
+    --secondary-text-color: rgba(255, 255, 255, var(--opacity-high));
+    --footer-text-color: var(--color-gray-400);
+    --footer-text-hover-color: var(--color-white);
+    --card-bg-color: #2A2C2F;
+    --toggle-bg-color: rgba(255, 255, 255, var(--opacity-low));
+    --toggle-active-bg: #3A3C3F;
+    --toggle-active-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3);
+    --icon-stroke: var(--color-white);
+    --icon-stroke-secondary: rgba(255, 255, 255, 0.50);
+    --border-color: rgba(255, 255, 255, var(--opacity-low));
+    --card-shadow: 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 
+                  0px 2px 4px rgba(0, 0, 0, 0.25);
+    --instruction-number-color: var(--color-white);
+
+    /* Dark theme variables */
+    --background: #1D1D1F;
+    --text: #F5F5F7;
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-tertiary: rgba(255, 255, 255, 0.45);
+    --card-bg: #2C2C2E;
+    --card-shadow: 0px 0px 0px 0.5px rgba(255, 255, 255, 0.05), 
+                  0px 2px 8px -2px rgba(0, 0, 0, 0.25);
+    --outline: rgba(255, 255, 255, 0.10);
+    --toggle-bg: rgba(255, 255, 255, 0.1);
+    --icon-stroke: #F5F5F7;
+    --icon-stroke-secondary: rgba(255, 255, 255, 0.65);
+    --opacity-medium: 0.5;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* We already have inline critical CSS in the HTML for body sizing */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  margin: 0;
-  padding: 0;
-  color: #333;
-  background-color: #f9f9f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    transition: background-color 0.3s ease;
 }
 
 .container {
-  width: 300px;
-  padding: 16px;
+    width: 100%;
+    min-height: 400px;
+    background: var(--background);
+    outline: 1px var(--outline) solid;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-h1 {
-  font-size: 24px;
-  margin-bottom: 4px;
-  color: #2c3e50;
+.header {
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.subtitle {
-  font-size: 14px;
-  color: #7f8c8d;
-  margin-top: 0;
-  margin-bottom: 20px;
+.logo {
+    width: 24px;
+    height: 24px;
+    position: relative;
+    flex-shrink: 0;
 }
 
-.instructions {
-  background-color: white;
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.logo svg path {
+    stroke: var(--icon-stroke);
+    transition: stroke 0.3s ease;
 }
 
-h2 {
-  font-size: 16px;
-  margin-top: 0;
-  margin-bottom: 12px;
-  color: #2c3e50;
+.title {
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'Inter Display', sans-serif;
+    font-weight: 600;
+    line-height: 20px;
+    word-wrap: break-word;
 }
 
-ol {
-  margin: 0;
-  padding-left: 20px;
+.content {
+    flex-grow: 1;
+    padding: 0 8px;
 }
 
-li {
-  margin-bottom: 8px;
-  line-height: 1.4;
+.card {
+    padding: 16px;
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    border-radius: 8px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.instruction-item:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-number {
+    display: inline-block;
+    min-width: 16px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    transition: color 0.3s ease;
+}
+
+.instruction-text {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 20px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .footer {
-  margin-top: 16px;
-  text-align: center;
-  font-size: 12px;
-  color: #95a5a6;
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-text {
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    line-height: 20px;
+    word-wrap: break-word;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-text:hover {
+    color: var(--text);
+    cursor: pointer;
+}
+
+.theme-toggle {
+    padding: 2px;
+    background: var(--toggle-bg);
+    border-radius: 40px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-button {
+    padding: 4px;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-button.active {
+    height: 24px;
+    padding: 4px;
+    background: var(--card-bg);
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
+    border-radius: 99px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+
+.icon svg path {
+    stroke: var(--icon-stroke-secondary);
+    transition: stroke 0.3s ease;
+}
+
+.toggle-button.active .icon svg path {
+    stroke: var(--icon-stroke);
+}
+
+/* Dark theme class applied to body */
+body.dark-theme {
+    background-color: var(--background);
+    color: var(--text);
 }

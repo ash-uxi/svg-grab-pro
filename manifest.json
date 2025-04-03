@@ -1,14 +1,26 @@
 {
   "manifest_version": 3,
   "name": "SVG Grab Pro",
-  "version": "1.0.0",
-  "description": "Copy or download SVG logos from websites with a right-click",
+  "version": "1.0",
+  "description": "Easily grab SVG logos from any website",
+  "icons": {
+    "16": "images/dark/icon16.png",
+    "48": "images/dark/icon48.png",
+    "128": "images/dark/icon128.png"
+  },
   "permissions": [
-    "activeTab",
-    "scripting",
     "storage",
-    "clipboardWrite"
+    "contextMenus",
+    "activeTab"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/dark/icon16.png",
+      "48": "images/dark/icon48.png",
+      "128": "images/dark/icon128.png"
+    }
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -18,7 +30,10 @@
       "js": ["contentScript.js"]
     }
   ],
-  "action": {
-    "default_popup": "popup.html"
-  }
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

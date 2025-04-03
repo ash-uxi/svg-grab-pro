@@ -78,6 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Also set directly in localStorage for content script to find
             localStorage.setItem('svgGrabProTheme', theme);
+            
+            // Notify background script to update the icon
+            chrome.runtime.sendMessage({
+                action: "themeChanged",
+                theme: theme
+            });
         } catch (e) {
             console.log("Could not save theme preference");
         }

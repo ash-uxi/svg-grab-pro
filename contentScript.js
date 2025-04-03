@@ -720,4 +720,13 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTheme();
 });
 
+// Also listen for messages from background script asking for theme
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action === "getTheme") {
+    // Return the current theme
+    sendResponse({ theme: currentTheme });
+  }
+  return true; // Keep the message channel open for async responses
+});
+
 // No longer listening for system theme changes

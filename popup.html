@@ -1,28 +1,183 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>SVG Grab Pro</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Grab Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Display:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Critical sizing styles */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 300px;
+            height: 200px; /* Reduced height */
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            outline-offset: -1px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-section, .footer-section {
+            padding-left: 6px; /* Reduced side padding */
+            padding-right: 6px;
+        }
+        
+        .header {
+            padding: 10px 6px; /* Reduced padding */
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Reduced gap */
+        }
+        
+        .logo {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .content-section {
+            padding: 0 6px; /* Reduced side padding */
+            flex: 1 0 auto;
+            margin-bottom: auto; /* Push content up */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card {
+            padding: 6px; /* Reduced padding */
+            display: flex;
+            flex-direction: column;
+            gap: 6px; /* Reduced gap */
+        }
+        
+        .instruction-item {
+            gap: 6px; /* Reduced gap */
+            display: flex;
+            align-items: center;
+        }
+        
+        .instruction-number {
+            width: 14px; /* Slightly reduced */
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .footer-section {
+            margin-top: auto; /* Push footer down */
+        }
+        
+        .footer {
+            padding: 10px 6px; /* Reduced padding */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-text {
+            flex: 1;
+        }
+        
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .toggle-button {
+            width: 28px; /* Fixed size */
+            height: 28px; /* Fixed size */
+            padding: 0;
+            border-radius: 99px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>SVG Grab Pro</h1>
-    <p class="subtitle">Copy & Download SVG Logos</p>
-    
-    <div class="instructions">
-      <h2>How to use:</h2>
-      <ol>
-        <li>Find an SVG logo on any website</li>
-        <li>Right-click on the logo</li>
-        <li>Select "SVG Grab Pro" from the custom menu</li>
-        <li>Choose "Copy SVG" or "Download SVG"</li>
-      </ol>
+    <div class="container">
+        <div class="header-section">
+            <div class="header">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path opacity="var(--opacity-medium)" d="M12.5 5V12M12.5 12V19M12.5 12L19.5 12M12.5 12L5.5 12M12.5 12L17.7927 17.2931M12.5 12L7.2071 6.70711M12.5 12L7.20735 17.2931M12.5 12L17.7931 6.70735" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13.5 4C13.5 4.55228 13.0523 5 12.5 5C11.9477 5 11.5 4.55228 11.5 4C11.5 3.44772 11.9477 3 12.5 3C13.0523 3 13.5 3.44772 13.5 4Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13.5 20C13.5 20.5523 13.0523 21 12.5 21C11.9477 21 11.5 20.5523 11.5 20C11.5 19.4477 11.9477 19 12.5 19C13.0523 19 13.5 19.4477 13.5 20Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21.5 12C21.5 12.5523 21.0523 13 20.5 13C19.9477 13 19.5 12.5523 19.5 12C19.5 11.4477 19.9477 11 20.5 11C21.0523 11 21.5 11.4477 21.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19.5 6C19.5 6.55228 19.0523 7 18.5 7C18.224 7 17.9741 6.88817 17.7931 6.70735C17.612 6.52637 17.5 6.27627 17.5 6C17.5 5.44772 17.9477 5 18.5 5C19.0523 5 19.5 5.44772 19.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19.5 18C19.5 18.5523 19.0523 19 18.5 19C17.9477 19 17.5 18.5523 17.5 18C17.5 17.724 17.6118 17.4741 17.7927 17.2931C17.9736 17.112 18.2237 17 18.5 17C19.0523 17 19.5 17.4477 19.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5.5 12C5.5 12.5523 5.05228 13 4.5 13C3.94772 13 3.5 12.5523 3.5 12C3.5 11.4477 3.94772 11 4.5 11C5.05228 11 5.5 11.4477 5.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.5 6C7.5 6.27614 7.38807 6.52615 7.2071 6.70711C7.02614 6.88807 6.77614 7 6.5 7C5.94772 7 5.5 6.55228 5.5 6C5.5 5.44772 5.94772 5 6.5 5C7.05228 5 7.5 5.44772 7.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7.5 18C7.5 18.5523 7.05228 19 6.5 19C5.94772 19 5.5 18.5523 5.5 18C5.5 17.4477 5.94772 17 6.5 17C6.77627 17 7.02637 17.112 7.20735 17.2931C7.38817 17.4741 7.5 17.724 7.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="title">SVG Grab Pro</div>
+            </div>
+        </div>
+        
+        <div class="content-section">
+            <div class="card instructions-card">
+                <div class="instruction-item">
+                    <div class="instruction-number">1</div>
+                    <div class="instruction-text">Find any SVG logo</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">2</div>
+                    <div class="instruction-text">Right-click on it</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">3</div>
+                    <div class="instruction-text">Choose Copy or Download</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-section">
+            <div class="footer">
+                <a href="https://x.com/Ash_uxi" class="footer-text" target="_blank" rel="noopener noreferrer">Build with &lt;3 by Ashuxi</a>
+                <div class="theme-toggle">
+                    <button class="toggle-button active" data-theme="dark">
+                        <div class="icon">
+                            <svg width="16" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.5 7.97727C13.7324 9.19276 12.3771 10.0001 10.8333 10.0001C8.4401 10.0001 6.5 8.05998 6.5 5.66675C6.5 4.12288 7.30738 2.76758 8.52294 2.00004C8.5153 2.00001 8.50765 2 8.5 2C5.18629 2 2.5 4.68629 2.5 8C2.5 11.3137 5.18629 14 8.5 14C11.8137 14 14.5 11.3137 14.5 8C14.5 7.99242 14.5 7.98485 14.5 7.97727Z" stroke="var(--icon-stroke-secondary)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </button>
+                    <button class="toggle-button" data-theme="light">
+                        <div class="icon">
+                            <svg width="16" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8.49999 15.3334V14.6667M3.31454 13.1855L3.78594 12.7141M1.16666 8.00002H1.83332M3.31454 2.81457L3.78594 3.28598M8.49999 1.33335V0.666687M13.214 3.28598L13.6854 2.81457M15.1667 8.00002H15.8333M13.214 12.7141L13.6854 13.1855M12.5 8.00002C12.5 10.2092 10.7091 12 8.49999 12C6.29085 12 4.49999 10.2092 4.49999 8.00002C4.49999 5.79088 6.29085 4.00002 8.49999 4.00002C10.7091 4.00002 12.5 5.79088 12.5 8.00002Z" stroke="var(--icon-stroke-secondary)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="footer">
-      <p>Version 1.0.0</p>
-    </div>
-  </div>
-  <script src="popup.js"></script>
+
+    <script src="popup.js"></script>
 </body>
 </html>
