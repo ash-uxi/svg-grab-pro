@@ -4,12 +4,12 @@
 // Listen for messages from content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.status) {
-    console.log(`[Globo Extension] ${message.status}`);
+    console.log(`[SVG Grab Pro] ${message.status}`);
   }
   return true;
 });
 
 // Log when extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Globo SVG Grabber extension installed successfully');
+  console.log('SVG Grab Pro extension installed successfully');
 });

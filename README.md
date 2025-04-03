@@ -1,4 +1,4 @@
-# Globo - SVG Logo Grabber
+# SVG Grab Pro
 
 A Chrome extension that helps you copy or download SVG logos from websites with a simple right-click.
 
@@ -13,7 +13,7 @@ A Chrome extension that helps you copy or download SVG logos from websites with 
 ## Project Structure
 
 ```
-globo/
+svg-grab-pro/
 │
 ├── manifest.json       # Extension configuration
 ├── background.js       # Background script for message handling
@@ -44,21 +44,21 @@ You can create these icons using any image editor or find free SVG icons online 
 
 1. Open Chrome and navigate to `chrome://extensions/`
 2. Enable "Developer mode" by toggling the switch in the top-right corner
-3. Click "Load unpacked" and select the `globo` directory
+3. Click "Load unpacked" and select your extension directory
 4. The extension should now be installed and ready to use
 
 ## Usage
 
 1. Navigate to any website with SVG logos
 2. Right-click on an SVG element
-3. Instead of the standard browser context menu, you'll see the Globo menu with two options:
+3. Instead of the standard browser context menu, you'll see the SVG Grab Pro menu with two options:
    - "Copy SVG" - Copies the SVG code to your clipboard
    - "Download SVG" - Downloads the SVG as a file named "logo.svg"
 4. After selecting an option, a notification will appear confirming the action
 
 ## How It Works
 
-Unlike most context menu extensions, Globo uses a custom right-click menu implementation that:
+Unlike most context menu extensions, SVG Grab Pro uses a custom right-click menu implementation that:
 - Only appears when right-clicking on actual SVG elements
 - Doesn't interfere with normal right-click behavior on non-SVG elements
 - Extracts the complete SVG code including styles

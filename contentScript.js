@@ -9,7 +9,7 @@ function createCustomContextMenu() {
   
   // Create the menu container
   customContextMenu = document.createElement('div');
-  customContextMenu.className = 'globo-context-menu';
+  customContextMenu.className = 'svg-grab-pro-context-menu';
   customContextMenu.style.cssText = `
     position: fixed;
     background: white;
@@ -25,35 +25,35 @@ function createCustomContextMenu() {
     font-weight: 400;
     color: #333;
     overflow: hidden;
-    animation: globoFadeIn 0.15s ease-out;
+    animation: svgGrabProFadeIn 0.15s ease-out;
     transform-origin: top left;
   `;
   
   // Add animation styles
   const styleEl = document.createElement('style');
   styleEl.textContent = `
-    @keyframes globoFadeIn {
+    @keyframes svgGrabProFadeIn {
       from { opacity: 0; transform: scale(0.98); }
       to { opacity: 1; transform: scale(1); }
     }
-    @keyframes globoFadeOut {
+    @keyframes svgGrabProFadeOut {
       from { opacity: 1; transform: scale(1); }
       to { opacity: 0; transform: scale(0.98); }
     }
     @media (prefers-color-scheme: dark) {
-      .globo-context-menu {
+      .svg-grab-pro-context-menu {
         background: #2a2a2a;
         color: #f5f5f7;
         border-color: rgba(255, 255, 255, 0.1);
       }
-      .globo-menu-header {
+      .svg-grab-pro-menu-header {
         color: rgba(255, 255, 255, 0.8) !important;
         border-bottom-color: rgba(255, 255, 255, 0.1) !important;
       }
-      .globo-menu-option:hover {
+      .svg-grab-pro-menu-option:hover {
         background-color: rgba(255, 255, 255, 0.1) !important;
       }
-      #globo-notification {
+      #svg-grab-pro-notification {
         background: #2a2a2a !important;
         color: #f5f5f7 !important;
         border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -64,8 +64,8 @@ function createCustomContextMenu() {
 
   // Create menu header
   const header = document.createElement('div');
-  header.className = 'globo-menu-header';
-  header.textContent = 'Globo SVG Options';
+  header.className = 'svg-grab-pro-menu-header';
+  header.textContent = 'SVG Grab Pro';
   header.style.cssText = `
     padding: 10px 16px;
     font-weight: 600;
@@ -78,7 +78,7 @@ function createCustomContextMenu() {
 
   // Create Copy SVG option
   const copyOption = document.createElement('div');
-  copyOption.className = 'globo-menu-option';
+  copyOption.className = 'svg-grab-pro-menu-option';
   copyOption.style.cssText = `
     padding: 12px 16px;
     cursor: pointer;
@@ -117,7 +117,7 @@ function createCustomContextMenu() {
 
   // Create Download SVG option
   const downloadOption = document.createElement('div');
-  downloadOption.className = 'globo-menu-option';
+  downloadOption.className = 'svg-grab-pro-menu-option';
   downloadOption.style.cssText = `
     padding: 12px 16px;
     cursor: pointer;
@@ -166,7 +166,7 @@ function showCustomContextMenu(x, y) {
   customContextMenu.style.left = `${x}px`;
   customContextMenu.style.top = `${y}px`;
   customContextMenu.style.display = 'block';
-  customContextMenu.style.animation = 'globoFadeIn 0.15s ease-out';
+  customContextMenu.style.animation = 'svgGrabProFadeIn 0.15s ease-out';
   
   // Check if menu goes beyond right edge
   const menuRect = customContextMenu.getBoundingClientRect();
@@ -186,7 +186,7 @@ function showCustomContextMenu(x, y) {
 // Hide custom context menu
 function hideCustomContextMenu() {
   if (customContextMenu) {
-    customContextMenu.style.animation = 'globoFadeOut 0.1s ease-out';
+    customContextMenu.style.animation = 'svgGrabProFadeOut 0.1s ease-out';
     setTimeout(() => {
       customContextMenu.style.display = 'none';
     }, 100);
@@ -467,10 +467,10 @@ function showNotification(message) {
   }
   
   // Create or find notification element
-  let notification = document.getElementById('globo-notification');
+  let notification = document.getElementById('svg-grab-pro-notification');
   if (!notification) {
     notification = document.createElement('div');
-    notification.id = 'globo-notification';
+    notification.id = 'svg-grab-pro-notification';
     notification.style.cssText = `
       position: fixed;
       bottom: 20px;
