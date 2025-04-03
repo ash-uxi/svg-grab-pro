@@ -6,26 +6,32 @@ let currentTheme = 'light'; // Default theme
 // Create CSS variables for theming
 const themeVariables = `
   :root {
+    /* Base colors - reference from unified palette */
+    --svg-grab-pro-black: #1A1C1F;
+    --svg-grab-pro-white: #FBFBFB;
+    --svg-grab-pro-gray-400: #A0A0A0;
+    --svg-grab-pro-gray-900: #212226;
+    
     /* Light theme variables (default) */
     --svg-grab-pro-bg-light: #FFFFFF;
-    --svg-grab-pro-text-primary-light: #1A1C1F;
+    --svg-grab-pro-text-primary-light: var(--svg-grab-pro-black);
     --svg-grab-pro-text-secondary-light: #2c3e50;
     --svg-grab-pro-border-light: rgba(15, 16, 18, 0.12);
     --svg-grab-pro-shadow-light: 0px 24px 24px -12px rgba(9, 10, 11, 0.06);
     --svg-grab-pro-hover-light: rgba(15, 16, 18, 0.04);
     --svg-grab-pro-menu-border-light: #f1f1f1;
-    --svg-grab-pro-stroke-light: #1A1C1F;
+    --svg-grab-pro-stroke-light: var(--svg-grab-pro-black);
     --svg-grab-pro-opacity-light: 0.28;
     
     /* Dark theme variables */
-    --svg-grab-pro-bg-dark: #212226;
-    --svg-grab-pro-text-primary-dark: #F5F5F7;
+    --svg-grab-pro-bg-dark: var(--svg-grab-pro-gray-900);
+    --svg-grab-pro-text-primary-dark: var(--svg-grab-pro-white);
     --svg-grab-pro-text-secondary-dark: rgba(255, 255, 255, 0.8);
     --svg-grab-pro-border-dark: rgba(255, 255, 255, 0.08);
     --svg-grab-pro-shadow-dark: 0px 24px 24px -12px rgba(0, 0, 0, 0.2);
     --svg-grab-pro-hover-dark: rgba(255, 255, 255, 0.04);
     --svg-grab-pro-menu-border-dark: rgba(255, 255, 255, 0.1);
-    --svg-grab-pro-stroke-dark: #F5F5F7;
+    --svg-grab-pro-stroke-dark: var(--svg-grab-pro-white);
     --svg-grab-pro-opacity-dark: 0.2;
     
     /* Active theme variables (will be updated by JavaScript) */
@@ -43,13 +49,27 @@ const themeVariables = `
 
 // Initialize theme from storage
 function initializeTheme() {
-  chrome.storage.sync.get('theme', function(data) {
-    if (data.theme) {
-      currentTheme = data.theme;
+  // First check localStorage (used by popup.js)
+  const localTheme = localStorage.getItem('svgGrabProTheme');
+  if (localTheme && (localTheme === 'dark' || localTheme === 'light')) {
+    currentTheme = localTheme;
+    updateThemeVariables();
+    if (customContextMenu) {
+      applyThemeToContextMenu();
+    }
+    return; // Exit if we found a theme in localStorage
+  }
+  
+  // Fall back to chrome.storage.local (to match popup.js)
+  chrome.storage.local.get('svgGrabProTheme', function(data) {
+    if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
+      currentTheme = data.svgGrabProTheme;
+      // Also update localStorage for future consistency
+      localStorage.setItem('svgGrabProTheme', currentTheme);
     } else {
-      // If no saved preference, check system preference
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      currentTheme = prefersDarkMode ? 'dark' : 'light';
+      // If no saved preference, default to dark theme (to match popup.js)
+      currentTheme = 'dark';
+      localStorage.setItem('svgGrabProTheme', currentTheme);
     }
     updateThemeVariables();
     if (customContextMenu) {
@@ -60,8 +80,26 @@ function initializeTheme() {
 
 // Listen for theme changes from the popup
 chrome.storage.onChanged.addListener(function(changes, namespace) {
-  if (namespace === 'sync' && changes.theme) {
-    currentTheme = changes.theme.newValue;
+  if ((namespace === 'sync' || namespace === 'local') && 
+      changes.svgGrabProTheme && 
+      (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
+    currentTheme = changes.svgGrabProTheme.newValue;
+    // Update localStorage to stay in sync
+    localStorage.setItem('svgGrabProTheme', currentTheme);
+    updateThemeVariables();
+    if (customContextMenu) {
+      applyThemeToContextMenu();
+    }
+  }
+});
+
+// Listen for storage events (in case localStorage is updated in another tab/window)
+window.addEventListener('storage', function(event) {
+  if (event.key === 'svgGrabProTheme' && 
+      (event.newValue === 'dark' || event.newValue === 'light')) {
+    currentTheme = event.newValue;
+    // Update chrome.storage to stay in sync
+    chrome.storage.local.set({ 'svgGrabProTheme': currentTheme });
     updateThemeVariables();
     if (customContextMenu) {
       applyThemeToContextMenu();
@@ -102,6 +140,18 @@ function applyThemeToContextMenu() {
   // Update context menu styles
   customContextMenu.style.backgroundColor = 'var(--svg-grab-pro-bg)';
   customContextMenu.style.boxShadow = 'var(--svg-grab-pro-shadow)';
+  customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)'; // Added border color
+  
+  // Update menu options
+  const menuOptions = customContextMenu.querySelectorAll('.menu-option');
+  menuOptions.forEach(option => {
+    option.addEventListener('mouseover', function() {
+      this.style.backgroundColor = 'var(--svg-grab-pro-hover)';
+    });
+    option.addEventListener('mouseout', function() {
+      this.style.backgroundColor = 'transparent';
+    });
+  });
   
   // Update SVG stroke colors for icons
   const svgElements = customContextMenu.querySelectorAll('svg path');
@@ -145,12 +195,12 @@ function createCustomContextMenu() {
   customContextMenu.className = 'svg-grab-pro-context-menu';
   customContextMenu.style.cssText = `
     position: fixed;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    min-width: 180px;
     padding: 4px;
     background: var(--svg-grab-pro-bg);
     box-shadow: var(--svg-grab-pro-shadow);
-    overflow: hidden;
+    border: 1px solid var(--svg-grab-pro-border);
     border-radius: 8px;
     z-index: 2147483647;
     display: none;
@@ -218,19 +268,22 @@ function createCustomContextMenu() {
     width: 16px;
     height: 16px;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
   
   copyIconContainer.innerHTML = `
     <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path opacity="0.28" d="M8.5 3.33333V7.99999M8.5 7.99999V12.6667M8.5 7.99999L13.1667 8M8.5 7.99999L3.83333 7.99999M8.5 7.99999L12.0284 11.5287M8.5 7.99999L4.9714 4.4714M8.5 7.99999L4.97157 11.5288M8.5 7.99999L12.0288 4.47156" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M9.16667 2.66667C9.16667 3.03486 8.86819 3.33333 8.5 3.33333C8.13181 3.33333 7.83333 3.03486 7.83333 2.66667C7.83333 2.29848 8.13181 2 8.5 2C8.86819 2 9.16667 2.29848 9.16667 2.66667Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M9.16667 13.3333C9.16667 13.7015 8.86819 14 8.5 14C8.13181 14 7.83333 13.7015 7.83333 13.3333C7.83333 12.9651 8.13181 12.6667 8.5 12.6667C8.86819 12.6667 9.16667 12.9651 9.16667 13.3333Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M14.5 8C14.5 8.36819 14.2015 8.66667 13.8333 8.66667C13.4651 8.66667 13.1667 8.36819 13.1667 8C13.1667 7.63181 13.4651 7.33333 13.8333 7.33333C14.2015 7.33333 14.5 7.63181 14.5 8Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M13.1667 4C13.1667 4.36819 12.8682 4.66667 12.5 4.66667C12.316 4.66667 12.1494 4.59211 12.0288 4.47157C11.908 4.35091 11.8333 4.18418 11.8333 4C11.8333 3.63181 12.1318 3.33333 12.5 3.33333C12.8682 3.33333 13.1667 3.63181 13.1667 4Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M13.1667 12C13.1667 12.3682 12.8682 12.6667 12.5 12.6667C12.1318 12.6667 11.8333 12.3682 11.8333 12C11.8333 11.816 11.9079 11.6494 12.0284 11.5288C12.1491 11.408 12.3158 11.3333 12.5 11.3333C12.8682 11.3333 13.1667 11.6318 13.1667 12Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M3.83333 8C3.83333 8.36819 3.53486 8.66667 3.16667 8.66667C2.79848 8.66667 2.5 8.36819 2.5 8C2.5 7.63181 2.79848 7.33333 3.16667 7.33333C3.53486 7.33333 3.83333 7.63181 3.83333 8Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M5.16667 4C5.16667 4.1841 5.09205 4.35076 4.9714 4.47141C4.85076 4.59205 4.68409 4.66667 4.5 4.66667C4.13181 4.66667 3.83333 4.36819 3.83333 4C3.83333 3.63181 4.13181 3.33333 4.5 3.33333C4.86819 3.33333 5.16667 3.63181 5.16667 4Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M5.16667 12C5.16667 12.3682 4.86819 12.6667 4.5 12.6667C4.13181 12.6667 3.83333 12.3682 3.83333 12C3.83333 11.6318 4.13181 11.3333 4.5 11.3333C4.68418 11.3333 4.85091 11.408 4.97157 11.5288C5.09211 11.6494 5.16667 11.816 5.16667 12Z" stroke="var(--svg-grab-pro-stroke)" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path opacity="var(--svg-grab-pro-opacity)" d="M8.5 3.33333V7.99999M8.5 7.99999V12.6667M8.5 7.99999L13.1667 8M8.5 7.99999L3.83333 7.99999M8.5 7.99999L12.0284 11.5287M8.5 7.99999L4.9714 4.4714M8.5 7.99999L4.97157 11.5288M8.5 7.99999L12.0288 4.47156" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9.16667 2.66667C9.16667 3.03486 8.86819 3.33333 8.5 3.33333C8.13181 3.33333 7.83333 3.03486 7.83333 2.66667C7.83333 2.29848 8.13181 2 8.5 2C8.86819 2 9.16667 2.29848 9.16667 2.66667Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M9.16667 13.3333C9.16667 13.7015 8.86819 14 8.5 14C8.13181 14 7.83333 13.7015 7.83333 13.3333C7.83333 12.9651 8.13181 12.6667 8.5 12.6667C8.86819 12.6667 9.16667 12.9651 9.16667 13.3333Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14.5 8C14.5 8.36819 14.2015 8.66667 13.8333 8.66667C13.4651 8.66667 13.1667 8.36819 13.1667 8C13.1667 7.63181 13.4651 7.33333 13.8333 7.33333C14.2015 7.33333 14.5 7.63181 14.5 8Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M13.1667 4C13.1667 4.36819 12.8682 4.66667 12.5 4.66667C12.316 4.66667 12.1494 4.59211 12.0288 4.47157C11.908 4.35091 11.8333 4.18418 11.8333 4C11.8333 3.63181 12.1318 3.33333 12.5 3.33333C12.8682 3.33333 13.1667 3.63181 13.1667 4Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M13.1667 12C13.1667 12.3682 12.8682 12.6667 12.5 12.6667C12.1318 12.6667 11.8333 12.3682 11.8333 12C11.8333 11.816 11.9079 11.6494 12.0284 11.5288C12.1491 11.408 12.3158 11.3333 12.5 11.3333C12.8682 11.3333 13.1667 11.6318 13.1667 12Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M3.83333 8C3.83333 8.36819 3.53486 8.66667 3.16667 8.66667C2.79848 8.66667 2.5 8.36819 2.5 8C2.5 7.63181 2.79848 7.33333 3.16667 7.33333C3.53486 7.33333 3.83333 7.63181 3.83333 8Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M5.16667 4C5.16667 4.1841 5.09205 4.35076 4.9714 4.47141C4.85076 4.59205 4.68409 4.66667 4.5 4.66667C4.13181 4.66667 3.83333 4.36819 3.83333 4C3.83333 3.63181 4.13181 3.33333 4.5 3.33333C4.86819 3.33333 5.16667 3.63181 5.16667 4Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M5.16667 12C5.16667 12.3682 4.86819 12.6667 4.5 12.6667C4.13181 12.6667 3.83333 12.3682 3.83333 12C3.83333 11.6318 4.13181 11.3333 4.5 11.3333C4.68418 11.3333 4.85091 11.408 4.97157 11.5288C5.09211 11.6494 5.16667 11.816 5.16667 12Z" stroke="currentColor" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `;
   
@@ -263,12 +316,15 @@ function createCustomContextMenu() {
     width: 16px;
     height: 16px;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
   
   downloadIconContainer.innerHTML = `
     <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path opacity="0.28" d="M3.83333 12.6667C3.46514 12.6667 3.16667 12.9651 3.16667 13.3333C3.16667 13.7015 3.46514 14 3.83333 14H13.1667C13.5349 14 13.8333 13.7015 13.8333 13.3333C13.8333 12.9651 13.5349 12.6667 13.1667 12.6667H3.83333Z" fill="var(--svg-grab-pro-stroke)"/>
-    <path d="M9.16667 6.38076C10.2502 6.35542 11.3326 6.26828 12.4086 6.11936C12.6744 6.08258 12.9363 6.2087 13.0733 6.4394C13.2102 6.6701 13.1955 6.96042 13.036 7.17614C11.9649 8.62454 10.7133 9.92567 9.31299 11.0473C9.07601 11.2371 8.78831 11.3333 8.5 11.3333C8.21169 11.3333 7.92399 11.2371 7.68701 11.0473C6.28667 9.92567 5.03515 8.62454 3.96399 7.17614C3.80446 6.96042 3.78978 6.6701 3.92675 6.4394C4.06372 6.2087 4.32563 6.08258 4.5914 6.11936C5.66742 6.26828 6.74984 6.35542 7.83333 6.38076V2.66667C7.83333 2.29848 8.13181 2 8.5 2C8.86819 2 9.16667 2.29848 9.16667 2.66667V6.38076Z" fill="var(--svg-grab-pro-stroke)"/>
+    <path opacity="var(--svg-grab-pro-opacity)" d="M3.83333 12.6667C3.46514 12.6667 3.16667 12.9651 3.16667 13.3333C3.16667 13.7015 3.46514 14 3.83333 14H13.1667C13.5349 14 13.8333 13.7015 13.8333 13.3333C13.8333 12.9651 13.5349 12.6667 13.1667 12.6667H3.83333Z" fill="currentColor"/>
+    <path d="M9.16667 6.38076C10.2502 6.35542 11.3326 6.26828 12.4086 6.11936C12.6744 6.08258 12.9363 6.2087 13.0733 6.4394C13.2102 6.6701 13.1955 6.96042 13.036 7.17614C11.9649 8.62454 10.7133 9.92567 9.31299 11.0473C9.07601 11.2371 8.78831 11.3333 8.5 11.3333C8.21169 11.3333 7.92399 11.2371 7.68701 11.0473C6.28667 9.92567 5.03515 8.62454 3.96399 7.17614C3.80446 6.96042 3.78978 6.6701 3.92675 6.4394C4.06372 6.2087 4.32563 6.08258 4.5914 6.11936C5.66742 6.26828 6.74984 6.35542 7.83333 6.38076V2.66667C7.83333 2.29848 8.13181 2 8.5 2C8.86819 2 9.16667 2.29848 9.16667 2.66667V6.38076Z" fill="currentColor"/>
     </svg>
   `;
   
@@ -295,22 +351,31 @@ function createCustomContextMenu() {
   document.body.appendChild(customContextMenu);
 }
 
+// Apply theme to SVG elements when menu is shown
+function applyThemeToMenuIcons() {
+  const menuContainer = document.querySelector('.svg-grab-pro-context-menu');
+  if (!menuContainer) return;
+  
+  // Use CSS variables instead of hardcoded values
+  const svgIcons = menuContainer.querySelectorAll('svg');
+  svgIcons.forEach(svg => {
+    svg.style.color = 'var(--svg-grab-pro-stroke)';
+  });
+}
+
 // Show custom context menu at specified position
 function showCustomContextMenu(x, y) {
   if (!customContextMenu) createCustomContextMenu();
   
   // Ensure theme is applied
   applyThemeToContextMenu();
+  applyThemeToMenuIcons(); // Apply theme to menu icons
   
   // Position the menu
   customContextMenu.style.left = `${x}px`;
   customContextMenu.style.top = `${y}px`;
   customContextMenu.style.display = 'flex';
   customContextMenu.style.animation = 'svgGrabProFadeIn 0.15s ease-out';
-  
-  // Set dimensions based on content
-  customContextMenu.style.width = 'auto';
-  customContextMenu.style.height = 'auto';
   
   // Check if menu goes beyond right edge
   const menuRect = customContextMenu.getBoundingClientRect();
@@ -655,17 +720,4 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTheme();
 });
 
-// Listen for theme changes (from system)
-const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-darkModeMediaQuery.addEventListener('change', (e) => {
-  // Only update if we don't have a saved preference
-  chrome.storage.sync.get('theme', function(data) {
-    if (!data.theme) {
-      currentTheme = e.matches ? 'dark' : 'light';
-      updateThemeVariables();
-      if (customContextMenu) {
-        applyThemeToContextMenu();
-      }
-    }
-  });
-});
+// No longer listening for system theme changes
