@@ -1,85 +1,142 @@
-# SVG Grab Pro
+<div align="center">
+  
+# ✨ SVG Grab Pro ✨
 
-A Chrome extension that helps you copy or download SVG logos from websites with a simple right-click.
+**The easiest way to extract SVG logos from any website**
 
-## Features
+[![Chrome Web Store Version](https://img.shields.io/chrome-web-store/v/placeholder.svg?style=flat-square)](https://chrome.google.com/webstore/detail/placeholder)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/placeholder.svg?style=flat-square)](https://chrome.google.com/webstore/detail/placeholder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-- Custom right-click menu that appears only when clicking on SVG elements
-- Copy SVG to clipboard with a single click
-- Download SVG as a file
-- Visual notifications for action feedback
-- Works with inline SVGs and SVG elements in the page
+<img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/icon128.png" width="128" height="128" alt="SVG Grab Pro Logo">
 
-## Project Structure
+**Copy and download SVG logos with a simple right-click**
 
+[✨ Install](#installation) • [🚀 Features](#features) • [🔍 How It Works](#how-it-works) • [🛠️ Tech Stack](#tech-stack)
+
+</div>
+
+---
+
+## 🌟 Overview
+
+**SVG Grab Pro** is a lightweight Chrome extension that makes it incredibly easy to extract SVG logos and icons from any website. Simply right-click on an SVG element, and a sleek custom menu appears, allowing you to copy or download the SVG with a single click.
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/screenshot.png" width="600" alt="SVG Grab Pro in action">
+</div>
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Smart Logo Detection** | Automatically identifies logos and icons on websites |
+| 🔍 **Right-Click Menu** | Elegant custom context menu for SVG elements |
+| 📋 **Copy to Clipboard** | Instantly copy complete SVG code with all styles preserved |
+| 💾 **One-Click Download** | Save SVGs directly to your computer with proper formatting |
+| 🌓 **Dark & Light Themes** | Adapts to your preferred browser theme |
+| 📱 **Touch-Friendly** | Works great on touch-enabled devices |
+
+## 🚀 Installation
+
+<details>
+<summary>📦 From Chrome Web Store (Recommended)</summary>
+
+1. Visit the [SVG Grab Pro page](https://chrome.google.com/webstore/detail/placeholder) on Chrome Web Store
+2. Click "Add to Chrome"
+3. Confirm by clicking "Add extension"
+
+</details>
+
+<details>
+<summary>💻 Manual Installation (Developer Mode)</summary>
+
+1. Download or clone this repository
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" (toggle in top-right corner)
+4. Click "Load unpacked" and select the extension directory
+5. SVG Grab Pro is now installed and ready to use!
+
+</details>
+
+## 🔍 How It Works
+
+SVG Grab Pro uses a sophisticated scoring system to identify SVG logos on websites:
+
+1. **Find an SVG**: Browse to any website with SVG logos or icons
+2. **Right-click**: When you right-click on an SVG, our extension analyzes it 
+3. **Use the menu**: If it's detected as a logo, our custom menu appears
+4. **Copy or Download**: Choose your preferred action
+5. **Instant results**: The SVG is ready to use in your projects!
+
+```js
+// SVG detection example (simplified)
+function isLikelyLogo(element) {
+  let score = 0;
+  
+  // Base score for being an SVG
+  if (element.tagName.toLowerCase() === 'svg') {
+    score += 15;
+    
+    // Check size, position, parent elements, etc.
+    // ... more detection logic ...
+    
+    // Consider it a logo if score is high enough
+    return score >= 40;
+  }
+  
+  return false;
+}
 ```
-svg-grab-pro/
-│
-├── manifest.json       # Extension configuration
-├── background.js       # Background script for message handling
-├── contentScript.js    # Content script with custom right-click menu
-├── popup.html          # Extension popup interface
-├── popup.js            # Popup functionality
-├── styles.css          # Styles for the popup
-│
-└── images/             # Extension icons (to be added)
-    ├── icon16.png      # 16x16 icon
-    ├── icon48.png      # 48x48 icon
-    └── icon128.png     # 128x128 icon
-```
 
-## Setup Instructions
+## 🛠️ Tech Stack
 
-### 1. Add Extension Icons
+- **JavaScript**: Vanilla JS for maximum performance
+- **Chrome Extension API**: Built on Manifest V3
+- **Modern CSS**: Clean, adaptive styling with CSS variables
+- **SVG Processing**: Smart extraction with style preservation
 
-Before loading the extension, you need to add icon files to the `images` directory:
+## 🔮 Future Enhancements
 
-- `icon16.png` (16x16 pixels)
-- `icon48.png` (48x48 pixels)
-- `icon128.png` (128x128 pixels)
+<details>
+<summary>Click to see what's coming next!</summary>
 
-You can create these icons using any image editor or find free SVG icons online and convert them to the appropriate sizes.
+- [ ] Background image SVG extraction
+- [ ] Preview before copying/downloading
+- [ ] Custom filename for downloads
+- [ ] SVG to PNG conversion option
+- [ ] Batch extraction of multiple SVGs
+- [ ] Extension settings page
+- [ ] Keyboard shortcuts
 
-### 2. Load the Extension in Chrome
+</details>
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" by toggling the switch in the top-right corner
-3. Click "Load unpacked" and select your extension directory
-4. The extension should now be installed and ready to use
+## 🤝 Contributing
 
-## Usage
+Contributions are welcome! Feel free to:
 
-1. Navigate to any website with SVG logos
-2. Right-click on an SVG element
-3. Instead of the standard browser context menu, you'll see the SVG Grab Pro menu with two options:
-   - "Copy SVG" - Copies the SVG code to your clipboard
-   - "Download SVG" - Downloads the SVG as a file named "logo.svg"
-4. After selecting an option, a notification will appear confirming the action
+- Report bugs 🐛
+- Suggest features ✨
+- Submit pull requests 🚀
 
-## How It Works
+Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
 
-Unlike most context menu extensions, SVG Grab Pro uses a custom right-click menu implementation that:
-- Only appears when right-clicking on actual SVG elements
-- Doesn't interfere with normal right-click behavior on non-SVG elements
-- Extracts the complete SVG code including styles
-- Provides immediate visual feedback through notifications
+## 📜 License
 
-## Potential Enhancements
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- Add support for SVGs served as background images
-- Implement options for customizing download filename
-- Add support for extracting SVGs from img/object tags (currently limited)
-- Add stats tracking for copied/downloaded SVGs
-- Add support for converting SVG to other formats (PNG, etc.)
+## 🙏 Credits
 
-## Troubleshooting
+- Beautiful icons from [Pika Icons](https://pikaicons.com/) 
+- Built with ❤️ by [Ashish Kashyap](https://github.com/ash-uxi)
 
-If the custom menu doesn't appear when right-clicking:
-- Make sure you're right-clicking directly on an SVG element
-- Some websites might use complex structures that make SVG detection difficult
-- Try right-clicking on different parts of the logo
-- Check the browser console for any error messages
+---
 
-## License
-
-MIT
+<div align="center">
+  <p>If you find SVG Grab Pro useful, please consider giving it a ⭐ on GitHub!</p>
+  <p>
+    <a href="https://twitter.com/Ash_uxi">Twitter</a> •
+    <a href="https://github.com/ash-uxi">GitHub</a> •
+    <a href="https://x.com/Ash_uxi">X (Twitter)</a>
+  </p>
+</div>
