@@ -23,7 +23,7 @@
 This extension solves that frustration in seconds:
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/ash-uxi/svg-grab-pro/main/images/screenshot.png" width="600" alt="SVG Grab Pro in action">
+  <img src="https://1x1jwtb0bx.ufs.sh/f/V94JAVmGcI5PFE74cIZNqraicHQh40gpzFTo6OBbV8lPx2m7" width="600" alt="SVG Grab Pro in action">
 </div>
 
 ## 🚀 Installation
