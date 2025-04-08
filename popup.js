@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get theme toggle buttons
     const darkButton = document.querySelector('[data-theme="dark"]');
     const lightButton = document.querySelector('[data-theme="light"]');
+    const allSitesToggle = document.getElementById('allSitesToggle');
+    const permissionStatus = document.getElementById('permissionStatus');
     
     // Function to safely access storage
     function safeStorage() {
@@ -89,7 +91,83 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Directly handle click events
+    // Ensure permission state and UI are in sync
+    function syncPermissionUI() {
+        if (chrome && chrome.permissions) {
+            chrome.permissions.contains({
+                origins: ["<all_urls>"]
+            }, function(hasPermission) {
+                // Get the stored value
+                storage.getItem('allSitesEnabled', function(storedValue) {
+                    // If there's a mismatch between actual permission and stored value
+                    if (hasPermission !== !!storedValue) {
+                        // Update storage to match actual permission state
+                        storage.setItem('allSitesEnabled', hasPermission);
+                    }
+                    
+                    // Update UI regardless
+                    allSitesToggle.checked = hasPermission;
+                    updatePermissionStatus(hasPermission);
+                });
+            });
+        } else {
+            // Fallback if permissions API is not available
+            storage.getItem('allSitesEnabled', function(enabled) {
+                allSitesToggle.checked = enabled === true;
+                updatePermissionStatus(enabled === true);
+            });
+        }
+    }
+    
+    // Update the permission status text
+    function updatePermissionStatus(enabled) {
+        if (enabled) {
+            permissionStatus.textContent = "On";
+            permissionStatus.style.color = "#4CAF50";
+        } else {
+            permissionStatus.textContent = "Off";
+            permissionStatus.style.color = "";
+        }
+    }
+    
+    // Handle permission toggle changes
+    if (allSitesToggle) {
+        allSitesToggle.addEventListener('change', function() {
+            if (this.checked) {
+                // Request permission
+                chrome.permissions.request({
+                    origins: ["<all_urls>"]
+                }, function(granted) {
+                    // Always sync UI with actual permission state
+                    syncPermissionUI();
+                    
+                    if (granted) {
+                        // Permission was granted, notify background script
+                        chrome.runtime.sendMessage({
+                            action: "permissionChanged",
+                            allSitesEnabled: true
+                        });
+                    }
+                });
+            } else {
+                // Remove permission
+                chrome.permissions.remove({
+                    origins: ["<all_urls>"]
+                }, function(removed) {
+                    // Always sync UI with actual permission state
+                    syncPermissionUI();
+                    
+                    // Notify background script
+                    chrome.runtime.sendMessage({
+                        action: "permissionChanged",
+                        allSitesEnabled: false
+                    });
+                });
+            }
+        });
+    }
+    
+    // Directly handle click events for theme
     darkButton.onclick = function() {
         console.log("Dark button clicked");
         applyTheme('dark');
@@ -109,4 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
             applyTheme('dark'); // Default to dark theme
         }
     });
+    
+    // Initialize permission state and make sure UI reflects it
+    syncPermissionUI();
 });

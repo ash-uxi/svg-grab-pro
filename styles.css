@@ -103,14 +103,14 @@ body {
     min-height: 400px;
     background: var(--background);
     outline: 1px var(--outline) solid;
-    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.header {
-    padding: 8px;
+.header-section {
+    padding: 16px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -130,42 +130,86 @@ body {
 
 .title {
     color: var(--text);
-    font-size: 15px;
+    font-size: 18px;
     font-family: 'Inter Display', sans-serif;
     font-weight: 600;
     line-height: 20px;
     word-wrap: break-word;
 }
 
-.content {
-    flex-grow: 1;
-    padding: 0 8px;
-}
-
-.card {
-    padding: 16px;
+.content-section {
+    flex: 1;
+    margin: 0 16px;
     background: var(--card-bg);
     box-shadow: var(--card-shadow);
     border-radius: 8px;
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 16px 0;
+}
+
+.permission-toggle {
+    margin: 0;
+    padding: 0;
+    border-top: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.permission-row {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.permission-status-container {
+    display: flex;
+    margin-top: 16px;
+    font-weight: 500;
+    font-size: 16px;
+    color: var(--text);
+}
+
+#permissionStatus {
+    margin-left: 4px;
+    font-style: normal;
+    font-size: 16px;
+    transition: color 0.3s;
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--outline);
+    margin: 0 16px;
+}
+
+.instructions-card {
+    padding: 16px;
 }
 
 .instruction-item {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.instruction-item:last-child {
-    margin-bottom: 0;
+    align-items: center;
+    padding: 6px 0;
 }
 
 .instruction-number {
     display: inline-block;
-    min-width: 16px;
-    text-align: center;
-    color: var(--text-tertiary);
+    min-width: auto;
+    margin-right: 8px;
+    color: var(--text);
     font-size: 14px;
     font-weight: 600;
     line-height: 20px;
@@ -174,7 +218,7 @@ body {
 
 .instruction-text {
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     font-family: 'Inter', sans-serif;
     font-weight: 400;
     line-height: 20px;
@@ -183,8 +227,11 @@ body {
     word-break: break-word;
 }
 
+.footer-section {
+    padding: 16px;
+}
+
 .footer {
-    padding: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -192,7 +239,7 @@ body {
 
 .footer-text {
     color: var(--text-tertiary);
-    font-size: 13px;
+    font-size: 14px;
     font-family: 'Inter', sans-serif;
     font-weight: 400;
     line-height: 20px;
@@ -207,9 +254,9 @@ body {
 }
 
 .theme-toggle {
-    padding: 2px;
-    background: var(--toggle-bg);
+    background-color: var(--toggle-bg);
     border-radius: 40px;
+    padding: 4px;
     display: flex;
     align-items: center;
     gap: 2px;
@@ -228,9 +275,9 @@ body {
 }
 
 .toggle-button.active {
-    height: 24px;
+    height: 28px;
     padding: 4px;
-    background: var(--card-bg);
+    background: white;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
     border-radius: 99px;
     display: flex;
@@ -257,4 +304,68 @@ body {
 body.dark-theme {
     background-color: var(--background);
     color: var(--text);
+}
+
+/* Slider switch styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 56px;
+    height: 32px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 28px;
+    width: 28px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+    background-color: #4CAF50;
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* Dark theme version of the slider */
+.dark-theme .slider {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .slider:before {
+    background-color: #fff;
+}
+
+.dark-theme input:checked + .slider {
+    background-color: #4CAF50;
+}
+
+.dark-theme .toggle-button.active {
+    background: var(--card-bg);
 }

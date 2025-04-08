@@ -11,29 +11,28 @@
         body {
             margin: 0;
             padding: 0;
-            width: 300px;
-            height: 200px; /* Reduced height */
+            width: 320px;
+            height: 420px; /* Slightly reduced from React example */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         .container {
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            outline-offset: -1px;
+            background-color: var(--background);
             display: flex;
             flex-direction: column;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        .header-section, .footer-section {
-            padding-left: 6px; /* Reduced side padding */
-            padding-right: 6px;
-        }
-        
-        .header {
-            padding: 10px 6px; /* Reduced padding */
+        /* Header */
+        .header-section {
+            padding: 16px;
             display: flex;
             align-items: center;
-            gap: 10px; /* Reduced gap */
+            gap: 12px;
         }
         
         .logo {
@@ -44,60 +43,167 @@
             justify-content: center;
         }
         
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* Main content */
         .content-section {
-            padding: 0 6px; /* Reduced side padding */
-            flex: 1 0 auto;
-            margin-bottom: auto; /* Push content up */
+            flex: 1;
+            margin: 0 16px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
         
-        .card {
-            padding: 6px; /* Reduced padding */
+        /* Toggle section */
+        .toggle-section {
             display: flex;
             flex-direction: column;
-            gap: 6px; /* Reduced gap */
+            align-items: center;
+            justify-content: center;
+            padding: 24px 0 16px 0;
+        }
+        
+        /* Permission toggle customization */
+        .permission-toggle {
+            margin: 0;
+            padding: 0;
+            border-top: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .permission-row {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        /* Switch styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 32px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 28px;
+            width: 28px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .permission-status-container {
+            display: flex;
+            margin-top: 16px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        #permissionStatus {
+            margin-left: 4px;
+            font-style: normal;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+        
+        /* Divider */
+        .divider {
+            height: 1px;
+            background-color: rgba(0, 0, 0, 0.1);
+            margin: 0 16px;
+        }
+        
+        /* Instructions */
+        .instructions-card {
+            padding: 16px;
         }
         
         .instruction-item {
-            gap: 6px; /* Reduced gap */
             display: flex;
             align-items: center;
+            padding: 6px 0;
         }
         
         .instruction-number {
-            width: 14px; /* Slightly reduced */
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-weight: 600;
+            margin-right: 8px;
+            min-width: auto;
+            font-size: 14px;
         }
         
+        .instruction-text {
+            font-size: 14px;
+        }
+        
+        /* Footer */
         .footer-section {
-            margin-top: auto; /* Push footer down */
+            padding: 16px;
         }
         
         .footer {
-            padding: 10px 6px; /* Reduced padding */
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .footer-text {
-            flex: 1;
+            font-size: 14px;
+            text-decoration: none;
         }
         
         .theme-toggle {
+            background-color: rgba(0, 0, 0, 0.08);
+            border-radius: 99px;
+            padding: 4px;
             display: flex;
-            align-items: center;
             gap: 2px;
         }
         
         .toggle-button {
-            width: 28px; /* Fixed size */
-            height: 28px; /* Fixed size */
+            width: 28px;
+            height: 28px;
             padding: 0;
             border-radius: 99px;
             display: flex;
@@ -108,56 +214,79 @@
             cursor: pointer;
         }
         
-        .icon {
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .toggle-button.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header-section">
-            <div class="header">
-                <div class="logo">
-                    <svg width="24" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path opacity="var(--opacity-medium)" d="M12.5 5V12M12.5 12V19M12.5 12L19.5 12M12.5 12L5.5 12M12.5 12L17.7927 17.2931M12.5 12L7.2071 6.70711M12.5 12L7.20735 17.2931M12.5 12L17.7931 6.70735" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M13.5 4C13.5 4.55228 13.0523 5 12.5 5C11.9477 5 11.5 4.55228 11.5 4C11.5 3.44772 11.9477 3 12.5 3C13.0523 3 13.5 3.44772 13.5 4Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M13.5 20C13.5 20.5523 13.0523 21 12.5 21C11.9477 21 11.5 20.5523 11.5 20C11.5 19.4477 11.9477 19 12.5 19C13.0523 19 13.5 19.4477 13.5 20Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M21.5 12C21.5 12.5523 21.0523 13 20.5 13C19.9477 13 19.5 12.5523 19.5 12C19.5 11.4477 19.9477 11 20.5 11C21.0523 11 21.5 11.4477 21.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M19.5 6C19.5 6.55228 19.0523 7 18.5 7C18.224 7 17.9741 6.88817 17.7931 6.70735C17.612 6.52637 17.5 6.27627 17.5 6C17.5 5.44772 17.9477 5 18.5 5C19.0523 5 19.5 5.44772 19.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M19.5 18C19.5 18.5523 19.0523 19 18.5 19C17.9477 19 17.5 18.5523 17.5 18C17.5 17.724 17.6118 17.4741 17.7927 17.2931C17.9736 17.112 18.2237 17 18.5 17C19.0523 17 19.5 17.4477 19.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M5.5 12C5.5 12.5523 5.05228 13 4.5 13C3.94772 13 3.5 12.5523 3.5 12C3.5 11.4477 3.94772 11 4.5 11C5.05228 11 5.5 11.4477 5.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M7.5 6C7.5 6.27614 7.38807 6.52615 7.2071 6.70711C7.02614 6.88807 6.77614 7 6.5 7C5.94772 7 5.5 6.55228 5.5 6C5.5 5.44772 5.94772 5 6.5 5C7.05228 5 7.5 5.44772 7.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M7.5 18C7.5 18.5523 7.05228 19 6.5 19C5.94772 19 5.5 18.5523 5.5 18C5.5 17.4477 5.94772 17 6.5 17C6.77627 17 7.02637 17.112 7.20735 17.2931C7.38817 17.4741 7.5 17.724 7.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="title">SVG Grab Pro</div>
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path opacity="var(--opacity-medium)" d="M12.5 5V12M12.5 12V19M12.5 12L19.5 12M12.5 12L5.5 12M12.5 12L17.7927 17.2931M12.5 12L7.2071 6.70711M12.5 12L7.20735 17.2931M12.5 12L17.7931 6.70735" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13.5 4C13.5 4.55228 13.0523 5 12.5 5C11.9477 5 11.5 4.55228 11.5 4C11.5 3.44772 11.9477 3 12.5 3C13.0523 3 13.5 3.44772 13.5 4Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M13.5 20C13.5 20.5523 13.0523 21 12.5 21C11.9477 21 11.5 20.5523 11.5 20C11.5 19.4477 11.9477 19 12.5 19C13.0523 19 13.5 19.4477 13.5 20Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21.5 12C21.5 12.5523 21.0523 13 20.5 13C19.9477 13 19.5 12.5523 19.5 12C19.5 11.4477 19.9477 11 20.5 11C21.0523 11 21.5 11.4477 21.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19.5 6C19.5 6.55228 19.0523 7 18.5 7C18.224 7 17.9741 6.88817 17.7931 6.70735C17.612 6.52637 17.5 6.27627 17.5 6C17.5 5.44772 17.9477 5 18.5 5C19.0523 5 19.5 5.44772 19.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19.5 18C19.5 18.5523 19.0523 19 18.5 19C17.9477 19 17.5 18.5523 17.5 18C17.5 17.724 17.6118 17.4741 17.7927 17.2931C17.9736 17.112 18.2237 17 18.5 17C19.0523 17 19.5 17.4477 19.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5.5 12C5.5 12.5523 5.05228 13 4.5 13C3.94772 13 3.5 12.5523 3.5 12C3.5 11.4477 3.94772 11 4.5 11C5.05228 11 5.5 11.4477 5.5 12Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7.5 6C7.5 6.27614 7.38807 6.52615 7.2071 6.70711C7.02614 6.88807 6.77614 7 6.5 7C5.94772 7 5.5 6.55228 5.5 6C5.5 5.44772 5.94772 5 6.5 5C7.05228 5 7.5 5.44772 7.5 6Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7.5 18C7.5 18.5523 7.05228 19 6.5 19C5.94772 19 5.5 18.5523 5.5 18C5.5 17.4477 5.94772 17 6.5 17C6.77627 17 7.02637 17.112 7.20735 17.2931C7.38817 17.4741 7.5 17.724 7.5 18Z" stroke="var(--icon-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
             </div>
+            <div class="title">SVG Grab Pro</div>
         </div>
         
+        <!-- Main Content Card -->
         <div class="content-section">
-            <div class="card instructions-card">
+            <!-- Toggle Section -->
+            <div class="toggle-section">
+                <div class="permission-toggle">
+                    <div class="permission-row">
+                        <label class="switch">
+                            <input type="checkbox" id="allSitesToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="permission-status-container">
+                        <span>SVG Detection:</span>
+                        <span id="permissionStatus"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Divider -->
+            <div class="divider"></div>
+            
+            <!-- Instructions -->
+            <div class="instructions-card">
                 <div class="instruction-item">
-                    <div class="instruction-number">1</div>
-                    <div class="instruction-text">Find any SVG logo</div>
+                    <div class="instruction-number">1.</div>
+                    <div class="instruction-text">Find any SVG logo on a website</div>
                 </div>
                 <div class="instruction-item">
-                    <div class="instruction-number">2</div>
-                    <div class="instruction-text">Right-click on it</div>
+                    <div class="instruction-number">2.</div>
+                    <div class="instruction-text">Right-click on the logo</div>
                 </div>
                 <div class="instruction-item">
-                    <div class="instruction-number">3</div>
+                    <div class="instruction-number">3.</div>
+                    <div class="instruction-text">Select "SVG Grab Pro" option</div>
+                </div>
+                <div class="instruction-item">
+                    <div class="instruction-number">4.</div>
                     <div class="instruction-text">Choose Copy or Download</div>
                 </div>
             </div>
         </div>
         
+        <!-- Footer -->
         <div class="footer-section">
             <div class="footer">
-                <a href="https://x.com/Ash_uxi" class="footer-text" target="_blank" rel="noopener noreferrer">Build with &lt;3 by Ashuxi</a>
+                <a href="https://x.com/Ash_uxi" class="footer-text" target="_blank" rel="noopener noreferrer">Build with ♥ by Ashuxi</a>
                 <div class="theme-toggle">
                     <button class="toggle-button active" data-theme="dark">
                         <div class="icon">

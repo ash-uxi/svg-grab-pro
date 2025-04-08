@@ -3,6 +3,27 @@ let selectedSvgElement = null;
 let customContextMenu = null;
 let currentTheme = 'light'; // Default theme
 
+// Check if we should initialize on this page
+function shouldInitializeExtension() {
+  return new Promise((resolve) => {
+    // If accessible, check chrome.storage
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get('allSitesEnabled', function(data) {
+        // Check if we are running in response to an explicit user action (like icon click)
+        const queryString = window.location.search;
+        const isExplicitAction = queryString.includes('svgGrabProAction=true');
+        
+        // Initialize if explicitly requested or all-sites mode is enabled
+        resolve(isExplicitAction || data.allSitesEnabled === true);
+      });
+    } else {
+      // Fallback to localStorage
+      const enabled = localStorage.getItem('svgGrabProAllSitesEnabled') === 'true';
+      resolve(enabled);
+    }
+  });
+}
+
 // Create CSS variables for theming
 const themeVariables = `
   :root {
@@ -90,6 +111,13 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
     if (customContextMenu) {
       applyThemeToContextMenu();
     }
+  }
+  
+  // Also listen for permission changes
+  if ((namespace === 'sync' || namespace === 'local') && 
+      changes.allSitesEnabled !== undefined) {
+    const isEnabled = changes.allSitesEnabled.newValue === true;
+    localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
   }
 });
 
@@ -545,38 +573,44 @@ function findSvgElement(element) {
   return null;
 }
 
-// Listen for contextmenu (right-click) events
-document.addEventListener('contextmenu', function(event) {
-  // Check if we right-clicked on or near an SVG
-  const svgElement = findSvgElement(event.target);
+// Initialize SVG detection and right-click handling
+function initializeSvgGrabPro() {
+  // Listen for contextmenu (right-click) events
+  document.addEventListener('contextmenu', function(event) {
+    // Check if we right-clicked on or near an SVG
+    const svgElement = findSvgElement(event.target);
+    
+    if (svgElement && isLikelyLogo(svgElement)) {
+      // Store the SVG for later use
+      selectedSvgElement = svgElement;
+      
+      // Prevent the default context menu
+      event.preventDefault();
+      
+      // Show our custom context menu
+      showCustomContextMenu(event.clientX, event.clientY);
+    } else {
+      // Not a logo SVG, let the default context menu show
+      selectedSvgElement = null;
+      hideCustomContextMenu();
+    }
+  });
   
-  if (svgElement && isLikelyLogo(svgElement)) {
-    // Store the SVG for later use
-    selectedSvgElement = svgElement;
-    
-    // Prevent the default context menu
-    event.preventDefault();
-    
-    // Show our custom context menu
-    showCustomContextMenu(event.clientX, event.clientY);
-  } else {
-    // Not a logo SVG, let the default context menu show
-    selectedSvgElement = null;
-    hideCustomContextMenu();
-  }
-});
-
-// Handle clicks outside the menu
-document.addEventListener('click', function(event) {
-  // Hide the menu if clicked outside
-  if (customContextMenu && !customContextMenu.contains(event.target)) {
-    hideCustomContextMenu();
-  }
-});
-
-// Also hide on scroll and window resize
-window.addEventListener('scroll', hideCustomContextMenu);
-window.addEventListener('resize', hideCustomContextMenu);
+  // Handle clicks outside the menu
+  document.addEventListener('click', function(event) {
+    // Hide the menu if clicked outside
+    if (customContextMenu && !customContextMenu.contains(event.target)) {
+      hideCustomContextMenu();
+    }
+  });
+  
+  // Also hide on scroll and window resize
+  window.addEventListener('scroll', hideCustomContextMenu);
+  window.addEventListener('resize', hideCustomContextMenu);
+  
+  // Create the context menu structure
+  createCustomContextMenu();
+}
 
 // Function to copy SVG to clipboard
 function copySvgToClipboard() {
@@ -713,20 +747,26 @@ function showNotification(message) {
   }, 3000);
 }
 
-// Initialize when DOM is fully loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // No need to create the menu immediately, we'll create it on demand
-  // But we can initialize the theme system
-  initializeTheme();
+// Check if we should initialize the extension
+shouldInitializeExtension().then(shouldInit => {
+  if (shouldInit) {
+    // Initialize when DOM is fully loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeSvgGrabPro);
+    } else {
+      initializeSvgGrabPro();
+    }
+  }
 });
 
-// Also listen for messages from background script asking for theme
+// Listen for messages from background script asking for theme
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === "getTheme") {
     // Return the current theme
     sendResponse({ theme: currentTheme });
+  } else if (request.action === "ping") {
+    // Respond to ping to show we're active
+    sendResponse({ status: "pong" });
   }
   return true; // Keep the message channel open for async responses
 });
-
-// No longer listening for system theme changes
