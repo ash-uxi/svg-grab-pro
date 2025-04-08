@@ -18,7 +18,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshot.png" alt="SVG Grab Pro Screenshot" width="400">
+  <img src="https://camo.githubusercontent.com/6763601a2819682ca26903c249ac2a63384820a914914de232bd6a390dbcad46/68747470733a2f2f3178316a7774623062782e7566732e73682f662f5639344a41566d47634935504645373463495a4e7172616963485168343067707a46546f364f426256386c5078326d37" alt="SVG Grab Pro Screenshot" width="400">
 </p>
 
 ## Features
