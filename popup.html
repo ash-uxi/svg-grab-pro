@@ -12,7 +12,7 @@
             margin: 0;
             padding: 0;
             width: 320px;
-            height: 420px; /* Slightly reduced from React example */
+            height: 400px; /* Slightly reduced height after removing an instruction */
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
@@ -121,7 +121,7 @@
             left: 2px;
             bottom: 2px;
             background-color: white;
-            transition: .4s;
+            transition: .4s cubic-bezier(0.08,0.82,0.17,1);
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
@@ -139,13 +139,38 @@
             margin-top: 16px;
             font-weight: 500;
             font-size: 16px;
+            position: relative;
+            height: 20px;
         }
         
-        #permissionStatus {
-            margin-left: 4px;
-            font-style: normal;
-            font-size: 16px;
-            transition: color 0.3s;
+        .status-label {
+            margin-right: 6px;
+        }
+        
+        .status-value {
+            position: relative;
+            width: 30px;
+            height: 20px;
+            overflow: hidden;
+        }
+        
+        #permissionStatus-on,
+        #permissionStatus-off {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            transition: transform 0.4s cubic-bezier(0.08,0.82,0.17,1), opacity 0.3s cubic-bezier(0.08,0.82,0.17,1);
+        }
+        
+        #permissionStatus-on {
+            color: #4CAF50;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        #permissionStatus-off {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         /* Divider */
@@ -253,8 +278,11 @@
                     </div>
                     
                     <div class="permission-status-container">
-                        <span>SVG Detection:</span>
-                        <span id="permissionStatus"></span>
+                        <span class="status-label">SVG Detection:</span>
+                        <div class="status-value">
+                            <span id="permissionStatus-on">On</span>
+                            <span id="permissionStatus-off">Off</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -274,10 +302,6 @@
                 </div>
                 <div class="instruction-item">
                     <div class="instruction-number">3.</div>
-                    <div class="instruction-text">Select "SVG Grab Pro" option</div>
-                </div>
-                <div class="instruction-item">
-                    <div class="instruction-number">4.</div>
                     <div class="instruction-text">Choose Copy or Download</div>
                 </div>
             </div>

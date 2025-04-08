@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const darkButton = document.querySelector('[data-theme="dark"]');
     const lightButton = document.querySelector('[data-theme="light"]');
     const allSitesToggle = document.getElementById('allSitesToggle');
-    const permissionStatus = document.getElementById('permissionStatus');
+    const permissionStatusOn = document.getElementById('permissionStatus-on');
+    const permissionStatusOff = document.getElementById('permissionStatus-off');
     
     // Function to safely access storage
     function safeStorage() {
@@ -119,14 +120,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Update the permission status text
+    // Update the permission status text with animation
     function updatePermissionStatus(enabled) {
         if (enabled) {
-            permissionStatus.textContent = "On";
-            permissionStatus.style.color = "#4CAF50";
+            // Show "On"
+            permissionStatusOn.style.opacity = '1';
+            permissionStatusOn.style.transform = 'translateY(0)';
+            permissionStatusOff.style.opacity = '0';
+            permissionStatusOff.style.transform = 'translateY(-10px)';
         } else {
-            permissionStatus.textContent = "Off";
-            permissionStatus.style.color = "";
+            // Show "Off"
+            permissionStatusOn.style.opacity = '0';
+            permissionStatusOn.style.transform = 'translateY(10px)';
+            permissionStatusOff.style.opacity = '1';
+            permissionStatusOff.style.transform = 'translateY(0)';
         }
     }
     
