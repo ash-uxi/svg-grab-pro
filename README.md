@@ -33,8 +33,7 @@
 ## Installation
 
 ### Chrome Web Store
-1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/dcojkoaanbhlnealhdcdjbcoaokkngch?utm_source=item-share-cb) (coming soon)
-2. Click "Add to Chrome"
+1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/dcojkoaanbhlnealhdcdjbcoaokkngch?utm_source=item-share-cb)
 3. Confirm the installation
 
 ### Manual Installation
