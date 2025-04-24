@@ -25,6 +25,13 @@ function initializeTheme() {
   chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     if (tabs[0]) {
       chrome.tabs.sendMessage(tabs[0].id, { action: "getTheme" }, function(response) {
+        // Check for runtime.lastError to prevent the unchecked error
+        if (chrome.runtime.lastError) {
+          // Content script isn't available, fall back to storage
+          checkStorageTheme();
+          return;
+        }
+        
         if (response && response.theme) {
           setIconForTheme(response.theme);
           return;
@@ -82,32 +89,44 @@ function checkAndInjectContentScript(tabId, frameId = 0) {
         if (hasPermission) {
           // Check if the script is already injected to avoid duplicates
           chrome.tabs.sendMessage(tabId, { action: "ping" }, function(response) {
-            if (chrome.runtime.lastError || !response) {
-              // Only proceed if the tab is still valid
-              chrome.tabs.get(tabId, function(tab) {
-                if (chrome.runtime.lastError) {
-                  return; // Tab doesn't exist anymore
-                }
-                
-                // Skip chrome:// and other restricted URLs
-                if (tab.url && !tab.url.startsWith("chrome://") && 
-                    !tab.url.startsWith("chrome-extension://") && 
-                    !tab.url.startsWith("about:")) {
-                  // Script not injected, inject it now
-                  chrome.scripting.executeScript({
-                    target: { tabId: tabId, frameIds: [frameId] },
-                    files: ["contentScript.js"]
-                  }).catch(error => {
-                    console.error("[SVG Grab Pro] Script injection error:", error);
-                  });
-                }
-              });
+            // Handle runtime.lastError to prevent unchecked error
+            if (chrome.runtime.lastError) {
+              // Script not injected, proceed with injection
+              injectScriptIfNeeded(tabId, frameId);
+              return;
+            }
+            
+            if (!response) {
+              injectScriptIfNeeded(tabId, frameId);
             }
           });
         } else {
           // We don't have permission, make sure storage reflects this
           chrome.storage.local.set({ 'allSitesEnabled': false });
         }
+      });
+    }
+  });
+}
+
+// Helper function to inject script if tab exists and URL is valid
+function injectScriptIfNeeded(tabId, frameId) {
+  // Only proceed if the tab is still valid
+  chrome.tabs.get(tabId, function(tab) {
+    if (chrome.runtime.lastError) {
+      return; // Tab doesn't exist anymore
+    }
+    
+    // Skip chrome:// and other restricted URLs
+    if (tab.url && !tab.url.startsWith("chrome://") && 
+        !tab.url.startsWith("chrome-extension://") && 
+        !tab.url.startsWith("about:")) {
+      // Script not injected, inject it now
+      chrome.scripting.executeScript({
+        target: { tabId: tabId, frameIds: [frameId] },
+        files: ["contentScript.js"]
+      }).catch(error => {
+        console.error("[SVG Grab Pro] Script injection error:", error);
       });
     }
   });
@@ -172,6 +191,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handle ping to check if content script is loaded
   if (message.action === "ping") {
     sendResponse({ status: "pong" });
+    return true; // Return true specifically for ping response
   }
   
   return true; // Keep the message channel open for async responses
