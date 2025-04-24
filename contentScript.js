@@ -3,6 +3,10 @@ let selectedSvgElement = null;
 let customContextMenu = null;
 let currentTheme = 'light'; // Default theme
 
+// Extension enable/initialization flags
+let extensionEnabled = false;
+let extensionInitialized = false;
+
 // Check if we should initialize on this page
 function shouldInitializeExtension() {
   return new Promise((resolve) => {
@@ -118,6 +122,17 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       changes.allSitesEnabled !== undefined) {
     const isEnabled = changes.allSitesEnabled.newValue === true;
     localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
+    // Handle dynamic enable/disable
+    extensionEnabled = isEnabled;
+    if (isEnabled && !extensionInitialized) {
+      initializeSvgGrabPro();
+    } else if (!isEnabled && extensionInitialized) {
+      // Disable extension UI
+      selectedSvgElement = null;
+      hideCustomContextMenu();
+      // Allow re-initialization when toggled back on
+      extensionInitialized = false;
+    }
   }
 });
 
@@ -456,7 +471,7 @@ function isLikelyLogo(element) {
   // Initialize score
   let score = 0;
   
-  // Check for SVG element
+  // SVG elements get direct handling
   if (element.tagName.toLowerCase() === 'svg') {
     score += 15; // Base score for being an SVG
     
@@ -476,69 +491,101 @@ function isLikelyLogo(element) {
     if (rect.top < window.innerHeight * 0.3 || rect.left < window.innerWidth * 0.2) {
       score += 15;
     }
+  } 
+  // Special handling for img tags with SVG sources
+  else if (element.tagName.toLowerCase() === 'img') {
+    const src = element.src || element.getAttribute('src') || '';
+    const alt = element.alt || element.getAttribute('alt') || '';
     
-    // Check if it's in header/nav/footer areas
-    let parent = element.parentElement;
-    let depth = 0;
-    const maxDepth = 6; // Only check up to 6 levels up
-    
-    while (parent && depth < maxDepth) {
-      const tagName = parent.tagName.toLowerCase();
-      const id = parent.id ? parent.id.toLowerCase() : '';
-      const className = getClassNameAsString(parent);
+    // Check if it's an SVG image
+    if (src.toLowerCase().endsWith('.svg') || 
+        src.toLowerCase().includes('.svg?') || 
+        src.match(/\.svg/i)) {
+      score += 20; // Higher score for explicit SVG images
       
-      // Check for common header/nav/footer elements
-      if (tagName === 'header' || tagName === 'nav' || tagName === 'footer') {
-        score += 20;
-        break;
-      }
-      
-      // Check for common ID/class patterns
-      if (id.includes('header') || id.includes('nav') || id.includes('footer') || 
-          id.includes('logo') || id.includes('brand')) {
+      // Size checks for logos
+      const rect = element.getBoundingClientRect();
+      if (rect.width > 20 && rect.width < 400 && rect.height > 20 && rect.height < 200) {
         score += 15;
       }
       
-      if (className.includes('header') || className.includes('nav') || className.includes('footer') || 
-          className.includes('logo') || className.includes('brand')) {
+      // Position check
+      if (rect.top < window.innerHeight * 0.3 || rect.left < window.innerWidth * 0.2) {
         score += 15;
       }
       
-      parent = parent.parentElement;
-      depth++;
-    }
-    
-    // Check if it's wrapped in a link to the homepage
-    parent = element.parentElement;
-    if (parent && parent.tagName.toLowerCase() === 'a') {
-      const href = parent.getAttribute('href');
-      if (href === '/' || href === '#' || href.includes('home')) {
-        score += 20;
+      // Check alt text for logo indicators
+      const logoKeywords = ['logo', 'brand', 'company', 'site', 'icon', 'emblem'];
+      for (const keyword of logoKeywords) {
+        if (alt.toLowerCase().includes(keyword)) {
+          score += 20; // Strong indicator from alt text
+          break;
+        }
       }
     }
+  }
+  
+  // Check if it's in header/nav/footer areas - this applies to both svg and img elements
+  let parent = element.parentElement;
+  let depth = 0;
+  const maxDepth = 6; // Only check up to 6 levels up
+  
+  while (parent && depth < maxDepth) {
+    const tagName = parent.tagName.toLowerCase();
+    const id = parent.id ? parent.id.toLowerCase() : '';
+    const className = getClassNameAsString(parent);
     
-    // Check for common logo/brand-related attributes
-    const id = element.id ? element.id.toLowerCase() : '';
-    const className = getClassNameAsString(element);
-    const ariaLabel = element.getAttribute('aria-label') ? element.getAttribute('aria-label').toLowerCase() : '';
-    const alt = element.getAttribute('alt') ? element.getAttribute('alt').toLowerCase() : '';
-    const title = element.getAttribute('title') ? element.getAttribute('title').toLowerCase() : '';
-    
-    const logoKeywords = ['logo', 'brand', 'company', 'site', 'icon', 'emblem'];
-    
-    for (const keyword of logoKeywords) {
-      if (id.includes(keyword)) score += 15;
-      if (className.includes(keyword)) score += 15;
-      if (ariaLabel.includes(keyword)) score += 15;
-      if (alt.includes(keyword)) score += 15;
-      if (title.includes(keyword)) score += 15;
+    // Check for common header/nav/footer elements
+    if (tagName === 'header' || tagName === 'nav' || tagName === 'footer') {
+      score += 20;
+      break;
     }
+    
+    // Check for common ID/class patterns
+    if (id.includes('header') || id.includes('nav') || id.includes('footer') || 
+        id.includes('logo') || id.includes('brand')) {
+      score += 15;
+    }
+    
+    if (className.includes('header') || className.includes('nav') || className.includes('footer') || 
+        className.includes('logo') || className.includes('brand')) {
+      score += 15;
+    }
+    
+    parent = parent.parentElement;
+    depth++;
+  }
+  
+  // Check if it's wrapped in a link to the homepage
+  parent = element.parentElement;
+  if (parent && parent.tagName.toLowerCase() === 'a') {
+    const href = parent.getAttribute('href');
+    if (href === '/' || href === '#' || href.includes('home')) {
+      score += 20;
+    }
+  }
+  
+  // Check for common logo/brand-related attributes
+  const id = element.id ? element.id.toLowerCase() : '';
+  const className = getClassNameAsString(element);
+  const ariaLabel = element.getAttribute('aria-label') ? element.getAttribute('aria-label').toLowerCase() : '';
+  const alt = element.getAttribute('alt') ? element.getAttribute('alt').toLowerCase() : '';
+  const title = element.getAttribute('title') ? element.getAttribute('title').toLowerCase() : '';
+  
+  const logoKeywords = ['logo', 'brand', 'company', 'site', 'icon', 'emblem'];
+  
+  for (const keyword of logoKeywords) {
+    if (id.includes(keyword)) score += 15;
+    if (className.includes(keyword)) score += 15;
+    if (ariaLabel.includes(keyword)) score += 15;
+    if (alt.includes(keyword)) score += 15;
+    if (title.includes(keyword)) score += 15;
   }
   
   console.log('Logo detection score:', score, element);
   
   // Check threshold score - adjust this based on testing
-  return score >= 40; // Minimum score to consider it a logo
+  return score >= 30; // Lowered threshold slightly to catch more logos
 }
 
 // Find the SVG element at or near the clicked element
@@ -550,7 +597,21 @@ function findSvgElement(element) {
   
   // If it's an image/object/embed with SVG
   if (element.tagName && ['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
-    if (element.src?.endsWith('.svg') || element.type === 'image/svg+xml') {
+    const src = element.src || element.getAttribute('src') || '';
+    const srcset = element.srcset || element.getAttribute('srcset') || '';
+    const type = element.type || element.getAttribute('type') || '';
+    
+    // Check if src contains .svg or if type is svg
+    if (src.toLowerCase().endsWith('.svg') || 
+        src.toLowerCase().includes('.svg?') || 
+        src.toLowerCase().includes('/svg') || 
+        src.match(/\.svg/i) || 
+        type === 'image/svg+xml') {
+      return element;
+    }
+    
+    // Check if srcset contains svg
+    if (srcset.toLowerCase().includes('.svg')) {
       return element;
     }
   }
@@ -575,8 +636,16 @@ function findSvgElement(element) {
 
 // Initialize SVG detection and right-click handling
 function initializeSvgGrabPro() {
+  // Prevent multiple initializations
+  if (extensionInitialized) return;
+  extensionInitialized = true;
+  
   // Listen for contextmenu (right-click) events
   document.addEventListener('contextmenu', function(event) {
+    if (!extensionEnabled) {
+      hideCustomContextMenu();
+      return;
+    }
     // Check if we right-clicked on or near an SVG
     const svgElement = findSvgElement(event.target);
     
@@ -615,21 +684,41 @@ function initializeSvgGrabPro() {
 // Function to copy SVG to clipboard
 function copySvgToClipboard() {
   try {
-    const svgContent = getSvgContent(selectedSvgElement);
+    const svgContentResult = getSvgContent(selectedSvgElement);
     
-    if (!svgContent) {
-      showNotification('Failed to get SVG content');
-      return;
-    }
-    
-    // Use the Clipboard API to write the SVG
-    navigator.clipboard.writeText(svgContent)
-      .then(() => {
-        showNotification('SVG copied to clipboard');
-      })
-      .catch(err => {
-        showNotification('Failed to copy SVG: ' + err.message);
+    // Handle promise if it's a fetch operation
+    if (svgContentResult instanceof Promise) {
+      svgContentResult.then(svgContent => {
+        if (!svgContent) {
+          showNotification('Failed to get SVG content');
+          return;
+        }
+        
+        // Use the Clipboard API to write the SVG
+        navigator.clipboard.writeText(svgContent)
+          .then(() => {
+            showNotification('SVG copied to clipboard');
+          })
+          .catch(err => {
+            showNotification('Failed to copy SVG: ' + err.message);
+          });
       });
+    } else {
+      // Regular synchronous SVG content
+      if (!svgContentResult) {
+        showNotification('Failed to get SVG content');
+        return;
+      }
+      
+      // Use the Clipboard API to write the SVG
+      navigator.clipboard.writeText(svgContentResult)
+        .then(() => {
+          showNotification('SVG copied to clipboard');
+        })
+        .catch(err => {
+          showNotification('Failed to copy SVG: ' + err.message);
+        });
+    }
   } catch (error) {
     showNotification('Error copying SVG: ' + error.message);
   }
@@ -638,28 +727,73 @@ function copySvgToClipboard() {
 // Function to download SVG as a file
 function downloadSvg() {
   try {
-    const svgContent = getSvgContent(selectedSvgElement);
+    const svgContentResult = getSvgContent(selectedSvgElement);
     
-    if (!svgContent) {
-      showNotification('Failed to get SVG content');
-      return;
+    // Handle promise if it's a fetch operation
+    if (svgContentResult instanceof Promise) {
+      svgContentResult.then(svgContent => {
+        if (!svgContent) {
+          showNotification('Failed to get SVG content');
+          return;
+        }
+        
+        // Create a blob from the SVG content
+        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create a download link and click it
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Try to get a good filename from various sources
+        let filename = 'logo.svg';
+        
+        // Check if we can get a better name from the SVG or image
+        if (selectedSvgElement.alt) {
+          filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
+        } else if (selectedSvgElement.id) {
+          filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
+        } else if (selectedSvgElement.src) {
+          // Try to extract filename from URL
+          const urlParts = selectedSvgElement.src.split('/');
+          const lastPart = urlParts[urlParts.length - 1];
+          if (lastPart && lastPart.includes('.svg')) {
+            filename = lastPart;
+          }
+        }
+        
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Cleanup
+        URL.revokeObjectURL(url);
+        showNotification('SVG downloaded successfully');
+      });
+    } else {
+      // Regular synchronous SVG content
+      if (!svgContentResult) {
+        showNotification('Failed to get SVG content');
+        return;
+      }
+      
+      // Create a blob from the SVG content
+      const blob = new Blob([svgContentResult], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link and click it
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'logo.svg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Cleanup
+      URL.revokeObjectURL(url);
+      showNotification('SVG downloaded successfully');
     }
-    
-    // Create a blob from the SVG content
-    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a download link and click it
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'logo.svg';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    // Cleanup
-    URL.revokeObjectURL(url);
-    showNotification('SVG downloaded successfully');
   } catch (error) {
     showNotification('Error downloading SVG: ' + error.message);
   }
@@ -667,6 +801,8 @@ function downloadSvg() {
 
 // Function to get SVG content (handles different SVG formats)
 function getSvgContent(element) {
+  if (!element) return null;
+  
   // If it's an actual SVG element
   if (element.tagName.toLowerCase() === 'svg') {
     // Clone the node to avoid modifying the original
@@ -690,11 +826,79 @@ function getSvgContent(element) {
   
   // If it's an SVG in an img, object, or embed
   if (['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
-    if (element.src?.endsWith('.svg')) {
-      // We need fetch but that would require async
-      // For now, we'll return a placeholder message
-      showNotification('Direct SVG extraction not supported for this element type yet');
-      return null;
+    const src = element.src || element.getAttribute('src') || '';
+    
+    if (src.toLowerCase().endsWith('.svg') || 
+        src.toLowerCase().includes('.svg?') || 
+        src.match(/\.svg/i)) {
+      
+      // Create a placeholder while we fetch the SVG
+      showNotification('Fetching SVG from source...');
+      
+      // Set up a promise to fetch the SVG content
+      return new Promise((resolve) => {
+        try {
+          // Check for cross-origin restrictions
+          const isCrossOrigin = isCrossOriginURL(src);
+          
+          // Use fetch to get the SVG content
+          fetch(src, { 
+            mode: isCrossOrigin ? 'cors' : 'no-cors', // Try CORS for cross-origin
+            credentials: 'same-origin',
+            cache: 'no-store'
+          })
+            .then(response => {
+              if (!response.ok) {
+                // If we get a specific error, throw it
+                if (response.status === 403 || response.status === 401) {
+                  throw new Error(`Access denied (${response.status}). This SVG is protected.`);
+                } else if (response.status === 404) {
+                  throw new Error(`SVG not found (404).`);
+                } else {
+                  throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
+                }
+              }
+              
+              // For successful responses, try to get the text
+              return response.text();
+            })
+            .then(svgContent => {
+              // Check if the content is actually SVG
+              if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
+                // Get only the SVG element (in case of extra content)
+                const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+                if (svgMatch) {
+                  resolve(svgMatch[0]);
+                } else {
+                  resolve(svgContent); // Fall back to full content
+                }
+              } else {
+                // If we got content but it's not SVG, might be a CORS issue
+                if (isCrossOrigin) {
+                  showNotification('Cannot access SVG from different domain (CORS restriction)');
+                } else {
+                  showNotification('The source does not contain valid SVG');
+                }
+                resolve(null);
+              }
+            })
+            .catch(err => {
+              console.error('Error fetching SVG:', err);
+              
+              // Provide more user-friendly error messages
+              if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                showNotification('Cannot access SVG (CORS restriction or network error)');
+              } else {
+                showNotification('Could not fetch SVG: ' + err.message);
+              }
+              resolve(null);
+            });
+        } catch (error) {
+          console.error('Error initiating fetch:', error);
+          showNotification('Error accessing SVG source');
+          resolve(null);
+        }
+      });
     }
   }
   
@@ -749,6 +953,7 @@ function showNotification(message) {
 
 // Check if we should initialize the extension
 shouldInitializeExtension().then(shouldInit => {
+  extensionEnabled = shouldInit;
   if (shouldInit) {
     // Initialize when DOM is fully loaded
     if (document.readyState === 'loading') {
@@ -758,6 +963,26 @@ shouldInitializeExtension().then(shouldInit => {
     }
   }
 });
+
+// Helper function to check if a URL is cross-origin
+function isCrossOriginURL(url) {
+  try {
+    // If it's a relative URL, it's same origin
+    if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
+      return false;
+    }
+    
+    // Try to parse the URL
+    const parsed = new URL(url, window.location.href);
+    const currentOrigin = window.location.origin;
+    
+    // Compare origins
+    return parsed.origin !== currentOrigin;
+  } catch (e) {
+    console.error('Error checking cross-origin URL:', e);
+    return true; // Assume cross-origin on error to be safe
+  }
+}
 
 // Listen for messages from background script asking for theme
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {

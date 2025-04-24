@@ -98,18 +98,11 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.permissions.contains({
                 origins: ["<all_urls>"]
             }, function(hasPermission) {
-                // Get the stored value
-                storage.getItem('allSitesEnabled', function(storedValue) {
-                    // If there's a mismatch between actual permission and stored value
-                    if (hasPermission !== !!storedValue) {
-                        // Update storage to match actual permission state
-                        storage.setItem('allSitesEnabled', hasPermission);
-                    }
-                    
-                    // Update UI regardless
-                    allSitesToggle.checked = hasPermission;
-                    updatePermissionStatus(hasPermission);
-                });
+                // Always update storage to match actual permission state
+                storage.setItem('allSitesEnabled', hasPermission);
+                // Update UI
+                allSitesToggle.checked = hasPermission;
+                updatePermissionStatus(hasPermission);
             });
         } else {
             // Fallback if permissions API is not available
