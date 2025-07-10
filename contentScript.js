@@ -16,14 +16,12 @@ function shouldInitializeExtension() {
         // Check if we are running in response to an explicit user action (like icon click)
         const queryString = window.location.search;
         const isExplicitAction = queryString.includes('svgGrabProAction=true');
-        
         // Initialize if explicitly requested or all-sites mode is enabled
         resolve(isExplicitAction || data.allSitesEnabled === true);
       });
     } else {
-      // Fallback to localStorage
-      const enabled = localStorage.getItem('svgGrabProAllSitesEnabled') === 'true';
-      resolve(enabled);
+      // If chrome.storage is not available, default to disabled
+      resolve(false);
     }
   });
 }
@@ -88,7 +86,7 @@ function initializeTheme() {
   });
 }
 
-// Listen for theme changes from the popup
+// Listen for theme and permission changes from the popup
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.svgGrabProTheme && 
@@ -99,12 +97,10 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       applyThemeToContextMenu();
     }
   }
-  
   // Also listen for permission changes
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.allSitesEnabled !== undefined) {
     const isEnabled = changes.allSitesEnabled.newValue === true;
-    localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
     // Handle dynamic enable/disable
     extensionEnabled = isEnabled;
     if (isEnabled && !extensionInitialized) {
