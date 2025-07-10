@@ -74,27 +74,12 @@ const themeVariables = `
 
 // Initialize theme from storage
 function initializeTheme() {
-  // First check localStorage (used by popup.js)
-  const localTheme = localStorage.getItem('svgGrabProTheme');
-  if (localTheme && (localTheme === 'dark' || localTheme === 'light')) {
-    currentTheme = localTheme;
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
-    }
-    return; // Exit if we found a theme in localStorage
-  }
-  
-  // Fall back to chrome.storage.local (to match popup.js)
   chrome.storage.local.get('svgGrabProTheme', function(data) {
     if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
       currentTheme = data.svgGrabProTheme;
-      // Also update localStorage for future consistency
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     } else {
-      // If no saved preference, default to dark theme (to match popup.js)
+      // If no saved preference, default to dark theme
       currentTheme = 'dark';
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     }
     updateThemeVariables();
     if (customContextMenu) {
@@ -109,8 +94,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       changes.svgGrabProTheme && 
       (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
     currentTheme = changes.svgGrabProTheme.newValue;
-    // Update localStorage to stay in sync
-    localStorage.setItem('svgGrabProTheme', currentTheme);
     updateThemeVariables();
     if (customContextMenu) {
       applyThemeToContextMenu();
@@ -132,20 +115,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       hideCustomContextMenu();
       // Allow re-initialization when toggled back on
       extensionInitialized = false;
-    }
-  }
-});
-
-// Listen for storage events (in case localStorage is updated in another tab/window)
-window.addEventListener('storage', function(event) {
-  if (event.key === 'svgGrabProTheme' && 
-      (event.newValue === 'dark' || event.newValue === 'light')) {
-    currentTheme = event.newValue;
-    // Update chrome.storage to stay in sync
-    chrome.storage.local.set({ 'svgGrabProTheme': currentTheme });
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
     }
   }
 });
