@@ -346,7 +346,7 @@ body.dark-theme {
 }
 
 input:checked + .slider {
-    background-color: #4CAF50;
+    background-color: #2196F3;
 }
 
 input:checked + .slider:before {
@@ -363,7 +363,7 @@ input:checked + .slider:before {
 }
 
 .dark-theme input:checked + .slider {
-    background-color: #4CAF50;
+    background-color: #2196F3;
 }
 
 .dark-theme .toggle-button.active {
