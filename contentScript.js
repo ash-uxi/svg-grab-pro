@@ -16,14 +16,12 @@ function shouldInitializeExtension() {
         // Check if we are running in response to an explicit user action (like icon click)
         const queryString = window.location.search;
         const isExplicitAction = queryString.includes('svgGrabProAction=true');
-        
         // Initialize if explicitly requested or all-sites mode is enabled
         resolve(isExplicitAction || data.allSitesEnabled === true);
       });
     } else {
-      // Fallback to localStorage
-      const enabled = localStorage.getItem('svgGrabProAllSitesEnabled') === 'true';
-      resolve(enabled);
+      // If chrome.storage is not available, default to disabled
+      resolve(false);
     }
   });
 }
@@ -74,27 +72,12 @@ const themeVariables = `
 
 // Initialize theme from storage
 function initializeTheme() {
-  // First check localStorage (used by popup.js)
-  const localTheme = localStorage.getItem('svgGrabProTheme');
-  if (localTheme && (localTheme === 'dark' || localTheme === 'light')) {
-    currentTheme = localTheme;
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
-    }
-    return; // Exit if we found a theme in localStorage
-  }
-  
-  // Fall back to chrome.storage.local (to match popup.js)
   chrome.storage.local.get('svgGrabProTheme', function(data) {
     if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
       currentTheme = data.svgGrabProTheme;
-      // Also update localStorage for future consistency
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     } else {
-      // If no saved preference, default to dark theme (to match popup.js)
+      // If no saved preference, default to dark theme
       currentTheme = 'dark';
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     }
     updateThemeVariables();
     if (customContextMenu) {
@@ -103,25 +86,21 @@ function initializeTheme() {
   });
 }
 
-// Listen for theme changes from the popup
+// Listen for theme and permission changes from the popup
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.svgGrabProTheme && 
       (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
     currentTheme = changes.svgGrabProTheme.newValue;
-    // Update localStorage to stay in sync
-    localStorage.setItem('svgGrabProTheme', currentTheme);
     updateThemeVariables();
     if (customContextMenu) {
       applyThemeToContextMenu();
     }
   }
-  
   // Also listen for permission changes
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.allSitesEnabled !== undefined) {
     const isEnabled = changes.allSitesEnabled.newValue === true;
-    localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
     // Handle dynamic enable/disable
     extensionEnabled = isEnabled;
     if (isEnabled && !extensionInitialized) {
@@ -132,20 +111,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       hideCustomContextMenu();
       // Allow re-initialization when toggled back on
       extensionInitialized = false;
-    }
-  }
-});
-
-// Listen for storage events (in case localStorage is updated in another tab/window)
-window.addEventListener('storage', function(event) {
-  if (event.key === 'svgGrabProTheme' && 
-      (event.newValue === 'dark' || event.newValue === 'light')) {
-    currentTheme = event.newValue;
-    // Update chrome.storage to stay in sync
-    chrome.storage.local.set({ 'svgGrabProTheme': currentTheme });
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
     }
   }
 });

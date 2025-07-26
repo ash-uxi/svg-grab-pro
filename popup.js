@@ -24,21 +24,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 };
             }
-            
-            // Fall back to localStorage if chrome.storage isn't available
-            localStorage.setItem('test', 'test');
-            localStorage.removeItem('test');
+            // Fall back to in-memory object if chrome.storage isn't available
+            // NOTE: This fallback is non-persistent and will reset on popup reload.
+            console.log("chrome.storage not accessible, using in-memory storage (non-persistent)");
+            const memoryStorage = {};
             return {
                 getItem: (key, callback) => {
-                    callback(localStorage.getItem(key));
+                    callback(memoryStorage[key] || null);
                 },
                 setItem: (key, value) => {
-                    localStorage.setItem(key, value);
+                    memoryStorage[key] = value;
                 }
             };
         } catch (e) {
             // If storage is not accessible, use an in-memory object
-            console.log("Storage not accessible, using in-memory storage");
+            console.log("Storage not accessible, using in-memory storage (non-persistent)");
             const memoryStorage = {};
             return {
                 getItem: (key, callback) => {
@@ -78,10 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             // Use consistent key name 'svgGrabProTheme' across storage mechanisms
             storage.setItem('svgGrabProTheme', theme);
-            
-            // Also set directly in localStorage for content script to find
-            localStorage.setItem('svgGrabProTheme', theme);
-            
             // Notify background script to update the icon
             chrome.runtime.sendMessage({
                 action: "themeChanged",
