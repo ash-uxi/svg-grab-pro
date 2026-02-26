@@ -145,21 +145,9 @@ function updateThemeVariables() {
 function applyThemeToContextMenu() {
   if (!customContextMenu) return;
   
-  // Update context menu styles
   customContextMenu.style.backgroundColor = 'var(--svg-grab-pro-bg)';
   customContextMenu.style.boxShadow = 'var(--svg-grab-pro-shadow)';
-  customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)'; // Added border color
-  
-  // Update menu options
-  const menuOptions = customContextMenu.querySelectorAll('.menu-option');
-  menuOptions.forEach(option => {
-    option.addEventListener('mouseover', function() {
-      this.style.backgroundColor = 'var(--svg-grab-pro-hover)';
-    });
-    option.addEventListener('mouseout', function() {
-      this.style.backgroundColor = 'transparent';
-    });
-  });
+  customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)';
   
   // Update SVG stroke colors for icons
   const svgElements = customContextMenu.querySelectorAll('svg path');
@@ -547,10 +535,7 @@ function isLikelyLogo(element) {
     if (title.includes(keyword)) score += 15;
   }
   
-  console.log('Logo detection score:', score, element);
-  
-  // Check threshold score - adjust this based on testing
-  return score >= 30; // Lowered threshold slightly to catch more logos
+  return score >= 30;
 }
 
 // Find the SVG element at or near the clicked element
@@ -646,150 +631,78 @@ function initializeSvgGrabPro() {
   createCustomContextMenu();
 }
 
-// Function to copy SVG to clipboard
 function copySvgToClipboard() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Use the Clipboard API to write the SVG
-        navigator.clipboard.writeText(svgContent)
-          .then(() => {
-            showNotification('SVG copied to clipboard');
-          })
-          .catch(err => {
-            showNotification('Failed to copy SVG: ' + err.message);
-          });
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
+  getSvgContent(selectedSvgElement)
+    .then(svgContent => {
+      if (!svgContent) {
         showNotification('Failed to get SVG content');
         return;
       }
-      
-      // Use the Clipboard API to write the SVG
-      navigator.clipboard.writeText(svgContentResult)
-        .then(() => {
-          showNotification('SVG copied to clipboard');
-        })
-        .catch(err => {
-          showNotification('Failed to copy SVG: ' + err.message);
-        });
-    }
-  } catch (error) {
-    showNotification('Error copying SVG: ' + error.message);
-  }
+      return navigator.clipboard.writeText(svgContent)
+        .then(() => showNotification('SVG copied to clipboard'));
+    })
+    .catch(err => {
+      showNotification('Failed to copy SVG: ' + err.message);
+    });
 }
 
-// Function to download SVG as a file
 function downloadSvg() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Create a blob from the SVG content
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        
-        // Create a download link and click it
-        const a = document.createElement('a');
-        a.href = url;
-        
-        // Try to get a good filename from various sources
-        let filename = 'logo.svg';
-        
-        // Check if we can get a better name from the SVG or image
-        if (selectedSvgElement.alt) {
-          filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.id) {
-          filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.src) {
-          // Try to extract filename from URL
-          const urlParts = selectedSvgElement.src.split('/');
-          const lastPart = urlParts[urlParts.length - 1];
-          if (lastPart && lastPart.includes('.svg')) {
-            filename = lastPart;
-          }
-        }
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Cleanup
-        URL.revokeObjectURL(url);
-        showNotification('SVG downloaded successfully');
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
+  getSvgContent(selectedSvgElement)
+    .then(svgContent => {
+      if (!svgContent) {
         showNotification('Failed to get SVG content');
         return;
       }
       
-      // Create a blob from the SVG content
-      const blob = new Blob([svgContentResult], { type: 'image/svg+xml' });
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
-      
-      // Create a download link and click it
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'logo.svg';
+      
+      let filename = 'logo.svg';
+      if (selectedSvgElement.alt) {
+        filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
+      } else if (selectedSvgElement.id) {
+        filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
+      } else if (selectedSvgElement.src) {
+        const urlParts = selectedSvgElement.src.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        if (lastPart && lastPart.includes('.svg')) {
+          filename = lastPart;
+        }
+      }
+      
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
-      // Cleanup
       URL.revokeObjectURL(url);
       showNotification('SVG downloaded successfully');
-    }
-  } catch (error) {
-    showNotification('Error downloading SVG: ' + error.message);
-  }
+    })
+    .catch(err => {
+      showNotification('Error downloading SVG: ' + err.message);
+    });
 }
 
 // Function to get SVG content (handles different SVG formats)
+// Always returns a Promise for consistent handling
 function getSvgContent(element) {
-  if (!element) return null;
+  if (!element) return Promise.resolve(null);
   
-  // If it's an actual SVG element
   if (element.tagName.toLowerCase() === 'svg') {
-    // Clone the node to avoid modifying the original
     const clone = element.cloneNode(true);
-    
-    // Make sure all styles are included
     const computedStyle = window.getComputedStyle(element);
-    const styleAttributes = [
-      'fill', 'stroke', 'stroke-width', 'opacity', 'filter'
-    ];
+    const styleAttributes = ['fill', 'stroke', 'stroke-width', 'opacity', 'filter'];
     
-    // Apply computed styles if they're not already set as attributes
     styleAttributes.forEach(attr => {
       if (computedStyle[attr] && !clone.hasAttribute(attr)) {
         clone.setAttribute(attr, computedStyle[attr]);
       }
     });
     
-    return clone.outerHTML;
+    return Promise.resolve(clone.outerHTML);
   }
   
-  // If it's an SVG in an img, object, or embed
   if (['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
     const src = element.src || element.getAttribute('src') || '';
     
@@ -797,77 +710,50 @@ function getSvgContent(element) {
         src.toLowerCase().includes('.svg?') || 
         src.match(/\.svg/i)) {
       
-      // Create a placeholder while we fetch the SVG
       showNotification('Fetching SVG from source...');
+      const isCrossOrigin = isCrossOriginURL(src);
       
-      // Set up a promise to fetch the SVG content
-      return new Promise((resolve) => {
-        try {
-          // Check for cross-origin restrictions
-          const isCrossOrigin = isCrossOriginURL(src);
-          
-          // Use fetch to get the SVG content
-          fetch(src, { 
-            mode: isCrossOrigin ? 'cors' : 'no-cors', // Try CORS for cross-origin
-            credentials: 'same-origin',
-            cache: 'no-store'
-          })
-            .then(response => {
-              if (!response.ok) {
-                // If we get a specific error, throw it
-                if (response.status === 403 || response.status === 401) {
-                  throw new Error(`Access denied (${response.status}). This SVG is protected.`);
-                } else if (response.status === 404) {
-                  throw new Error(`SVG not found (404).`);
-                } else {
-                  throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
-                }
-              }
-              
-              // For successful responses, try to get the text
-              return response.text();
-            })
-            .then(svgContent => {
-              // Check if the content is actually SVG
-              if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
-                // Get only the SVG element (in case of extra content)
-                const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
-                if (svgMatch) {
-                  resolve(svgMatch[0]);
-                } else {
-                  resolve(svgContent); // Fall back to full content
-                }
-              } else {
-                // If we got content but it's not SVG, might be a CORS issue
-                if (isCrossOrigin) {
-                  showNotification('Cannot access SVG from different domain (CORS restriction)');
-                } else {
-                  showNotification('The source does not contain valid SVG');
-                }
-                resolve(null);
-              }
-            })
-            .catch(err => {
-              console.error('Error fetching SVG:', err);
-              
-              // Provide more user-friendly error messages
-              if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                showNotification('Cannot access SVG (CORS restriction or network error)');
-              } else {
-                showNotification('Could not fetch SVG: ' + err.message);
-              }
-              resolve(null);
-            });
-        } catch (error) {
-          console.error('Error initiating fetch:', error);
-          showNotification('Error accessing SVG source');
-          resolve(null);
-        }
-      });
+      return fetch(src, { 
+        mode: isCrossOrigin ? 'cors' : 'no-cors',
+        credentials: 'same-origin',
+        cache: 'no-store'
+      })
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 403 || response.status === 401) {
+              throw new Error(`Access denied (${response.status}). This SVG is protected.`);
+            } else if (response.status === 404) {
+              throw new Error(`SVG not found (404).`);
+            } else {
+              throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
+            }
+          }
+          return response.text();
+        })
+        .then(svgContent => {
+          if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
+            const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+            return svgMatch ? svgMatch[0] : svgContent;
+          }
+          if (isCrossOrigin) {
+            showNotification('Cannot access SVG from different domain (CORS restriction)');
+          } else {
+            showNotification('The source does not contain valid SVG');
+          }
+          return null;
+        })
+        .catch(err => {
+          if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            showNotification('Cannot access SVG (CORS restriction or network error)');
+          } else {
+            showNotification('Could not fetch SVG: ' + err.message);
+          }
+          return null;
+        });
     }
   }
   
-  return null;
+  return Promise.resolve(null);
 }
 
 // Create and show a notification

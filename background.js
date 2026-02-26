@@ -16,7 +16,6 @@ function setIconForTheme(theme) {
       };
   
   chrome.action.setIcon({ path: iconPath });
-  console.log(`[SVG Grab Pro] Icon updated to ${theme} theme`);
 }
 
 // Initialize icon based on saved theme
@@ -68,7 +67,6 @@ function syncPermissionState() {
       // If there's a mismatch, update storage to match actual permission state
       if (hasPermission !== !!data.allSitesEnabled) {
         chrome.storage.local.set({ 'allSitesEnabled': hasPermission });
-        console.log(`[SVG Grab Pro] Synchronized permission state: ${hasPermission}`);
       }
     });
   });
@@ -169,10 +167,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   // Handle status messages
-  if (message.status) {
-    console.log(`[SVG Grab Pro] ${message.status}`);
-  }
-  
   // Handle ping to check if content script is loaded
   if (message.action === "ping") {
     sendResponse({ status: "pong" });
@@ -192,8 +186,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
 // Log when extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('SVG Grab Pro extension installed successfully');
-  // Initialize theme when extension is installed
   initializeTheme();
   
   // Default to all-sites mode disabled
@@ -202,9 +194,6 @@ chrome.runtime.onInstalled.addListener(() => {
   // Ensure permissions are synchronized
   syncPermissionState();
 });
-
-// Periodically check permission state to ensure consistency
-setInterval(syncPermissionState, 60000); // Check every minute
 
 // Initialize theme when background script runs
 initializeTheme();

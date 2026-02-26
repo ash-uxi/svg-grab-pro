@@ -30,10 +30,6 @@
     --icon-stroke: var(--color-black);
     --icon-stroke-secondary: rgba(15, 16, 18, 0.50);
     --border-color: rgba(0, 0, 0, var(--opacity-low));
-    --card-shadow: 0px 0px 0px 1px rgba(9, 10, 11, 0.06), 
-                  0px 1px 1px -0.5px rgba(9, 10, 11, 0.06), 
-                  0px 3px 3px -1.5px rgba(9, 10, 11, 0.06), 
-                  0px 6px 6px -3px rgba(9, 10, 11, 0.06);
     --instruction-number-color: var(--color-black);
 
     /* Light theme variables */
@@ -90,8 +86,11 @@
     padding: 0;
 }
 
-/* We already have inline critical CSS in the HTML for body sizing */
 body {
+    margin: 0;
+    padding: 0;
+    width: 320px;
+    height: 400px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--background);
     color: var(--text);
@@ -180,13 +179,38 @@ body {
     font-weight: 500;
     font-size: 16px;
     color: var(--text);
+    position: relative;
+    height: 20px;
 }
 
-#permissionStatus {
-    margin-left: 4px;
-    font-style: normal;
-    font-size: 16px;
-    transition: color 0.3s;
+.status-label {
+    margin-right: 6px;
+}
+
+.status-value {
+    position: relative;
+    width: 30px;
+    height: 20px;
+    overflow: hidden;
+}
+
+#permissionStatus-on,
+#permissionStatus-off {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    transition: transform 0.4s cubic-bezier(0.08,0.82,0.17,1), opacity 0.3s cubic-bezier(0.08,0.82,0.17,1);
+}
+
+#permissionStatus-on {
+    color: #4CAF50;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+#permissionStatus-off {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .divider {
