@@ -631,6 +631,41 @@ function initializeSvgGrabPro() {
   createCustomContextMenu();
 }
 
+function sanitizeSvg(svgString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svg = doc.documentElement;
+  
+  const dangerousTags = ['script', 'foreignObject', 'iframe', 'embed', 'object'];
+  dangerousTags.forEach(tag => {
+    const elements = svg.getElementsByTagName(tag);
+    while (elements.length > 0) {
+      elements[0].parentNode.removeChild(elements[0]);
+    }
+  });
+  
+  function removeEventHandlers(el) {
+    if (el.attributes) {
+      const toRemove = [];
+      for (let i = 0; i < el.attributes.length; i++) {
+        if (el.attributes[i].name.toLowerCase().startsWith('on')) {
+          toRemove.push(el.attributes[i].name);
+        }
+      }
+      toRemove.forEach(attr => el.removeAttribute(attr));
+    }
+    if (el.children) {
+      for (let i = 0; i < el.children.length; i++) {
+        removeEventHandlers(el.children[i]);
+      }
+    }
+  }
+  removeEventHandlers(svg);
+  
+  const serializer = new XMLSerializer();
+  return serializer.serializeToString(svg);
+}
+
 function copySvgToClipboard() {
   getSvgContent(selectedSvgElement)
     .then(svgContent => {
@@ -638,7 +673,8 @@ function copySvgToClipboard() {
         showNotification('Failed to get SVG content');
         return;
       }
-      return navigator.clipboard.writeText(svgContent)
+      const sanitized = sanitizeSvg(svgContent);
+      return navigator.clipboard.writeText(sanitized)
         .then(() => showNotification('SVG copied to clipboard'));
     })
     .catch(err => {
@@ -654,6 +690,7 @@ function downloadSvg() {
         return;
       }
       
+      svgContent = sanitizeSvg(svgContent);
       const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
