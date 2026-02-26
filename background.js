@@ -16,7 +16,6 @@ function setIconForTheme(theme) {
       };
   
   chrome.action.setIcon({ path: iconPath });
-  console.log(`[SVG Grab Pro] Icon updated to ${theme} theme`);
 }
 
 // Initialize icon based on saved theme
@@ -68,7 +67,6 @@ function syncPermissionState() {
       // If there's a mismatch, update storage to match actual permission state
       if (hasPermission !== !!data.allSitesEnabled) {
         chrome.storage.local.set({ 'allSitesEnabled': hasPermission });
-        console.log(`[SVG Grab Pro] Synchronized permission state: ${hasPermission}`);
       }
     });
   });
@@ -132,21 +130,6 @@ function injectScriptIfNeeded(tabId, frameId) {
   });
 }
 
-// Handle active tab changes (for toolbar button usage)
-chrome.action.onClicked.addListener((tab) => {
-  // When user clicks the extension icon in toolbar, inject the script to the active tab
-  if (tab.url && !tab.url.startsWith("chrome://") && 
-      !tab.url.startsWith("chrome-extension://") && 
-      !tab.url.startsWith("about:")) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["contentScript.js"]
-    }).catch(error => {
-      console.error("[SVG Grab Pro] Script injection error:", error);
-    });
-  }
-});
-
 // Listen for tab updates to inject content script when needed (if all-sites mode enabled)
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete' && tab.url && 
@@ -184,10 +167,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   // Handle status messages
-  if (message.status) {
-    console.log(`[SVG Grab Pro] ${message.status}`);
-  }
-  
   // Handle ping to check if content script is loaded
   if (message.action === "ping") {
     sendResponse({ status: "pong" });
@@ -195,6 +174,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   return true; // Keep the message channel open for async responses
+});
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'toggle-svg-detection') {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0] && tabs[0].url && 
+          !tabs[0].url.startsWith("chrome://") && 
+          !tabs[0].url.startsWith("chrome-extension://") && 
+          !tabs[0].url.startsWith("about:")) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          files: ["contentScript.js"]
+        }).catch(() => {});
+      }
+    });
+  }
 });
 
 // Listen for storage changes to update icon
@@ -207,8 +202,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 
 // Log when extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('SVG Grab Pro extension installed successfully');
-  // Initialize theme when extension is installed
   initializeTheme();
   
   // Default to all-sites mode disabled
@@ -217,9 +210,6 @@ chrome.runtime.onInstalled.addListener(() => {
   // Ensure permissions are synchronized
   syncPermissionState();
 });
-
-// Periodically check permission state to ensure consistency
-setInterval(syncPermissionState, 60000); // Check every minute
 
 // Initialize theme when background script runs
 initializeTheme();

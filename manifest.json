@@ -28,11 +28,13 @@
   "background": {
     "service_worker": "background.js"
   },
-
-  "web_accessible_resources": [
-    {
-      "resources": ["popup.js"],
-      "matches": ["<all_urls>"]
+  "commands": {
+    "toggle-svg-detection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Toggle SVG detection on the current page"
     }
-  ]
+  }
 }

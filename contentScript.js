@@ -21,9 +21,7 @@ function shouldInitializeExtension() {
         resolve(isExplicitAction || data.allSitesEnabled === true);
       });
     } else {
-      // Fallback to localStorage
-      const enabled = localStorage.getItem('svgGrabProAllSitesEnabled') === 'true';
-      resolve(enabled);
+      resolve(false);
     }
   });
 }
@@ -74,27 +72,11 @@ const themeVariables = `
 
 // Initialize theme from storage
 function initializeTheme() {
-  // First check localStorage (used by popup.js)
-  const localTheme = localStorage.getItem('svgGrabProTheme');
-  if (localTheme && (localTheme === 'dark' || localTheme === 'light')) {
-    currentTheme = localTheme;
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
-    }
-    return; // Exit if we found a theme in localStorage
-  }
-  
-  // Fall back to chrome.storage.local (to match popup.js)
   chrome.storage.local.get('svgGrabProTheme', function(data) {
     if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
       currentTheme = data.svgGrabProTheme;
-      // Also update localStorage for future consistency
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     } else {
-      // If no saved preference, default to dark theme (to match popup.js)
       currentTheme = 'dark';
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     }
     updateThemeVariables();
     if (customContextMenu) {
@@ -109,8 +91,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       changes.svgGrabProTheme && 
       (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
     currentTheme = changes.svgGrabProTheme.newValue;
-    // Update localStorage to stay in sync
-    localStorage.setItem('svgGrabProTheme', currentTheme);
     updateThemeVariables();
     if (customContextMenu) {
       applyThemeToContextMenu();
@@ -121,7 +101,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.allSitesEnabled !== undefined) {
     const isEnabled = changes.allSitesEnabled.newValue === true;
-    localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
     // Handle dynamic enable/disable
     extensionEnabled = isEnabled;
     if (isEnabled && !extensionInitialized) {
@@ -132,20 +111,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       hideCustomContextMenu();
       // Allow re-initialization when toggled back on
       extensionInitialized = false;
-    }
-  }
-});
-
-// Listen for storage events (in case localStorage is updated in another tab/window)
-window.addEventListener('storage', function(event) {
-  if (event.key === 'svgGrabProTheme' && 
-      (event.newValue === 'dark' || event.newValue === 'light')) {
-    currentTheme = event.newValue;
-    // Update chrome.storage to stay in sync
-    chrome.storage.local.set({ 'svgGrabProTheme': currentTheme });
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
     }
   }
 });
@@ -180,21 +145,9 @@ function updateThemeVariables() {
 function applyThemeToContextMenu() {
   if (!customContextMenu) return;
   
-  // Update context menu styles
   customContextMenu.style.backgroundColor = 'var(--svg-grab-pro-bg)';
   customContextMenu.style.boxShadow = 'var(--svg-grab-pro-shadow)';
-  customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)'; // Added border color
-  
-  // Update menu options
-  const menuOptions = customContextMenu.querySelectorAll('.menu-option');
-  menuOptions.forEach(option => {
-    option.addEventListener('mouseover', function() {
-      this.style.backgroundColor = 'var(--svg-grab-pro-hover)';
-    });
-    option.addEventListener('mouseout', function() {
-      this.style.backgroundColor = 'transparent';
-    });
-  });
+  customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)';
   
   // Update SVG stroke colors for icons
   const svgElements = customContextMenu.querySelectorAll('svg path');
@@ -582,26 +535,19 @@ function isLikelyLogo(element) {
     if (title.includes(keyword)) score += 15;
   }
   
-  console.log('Logo detection score:', score, element);
-  
-  // Check threshold score - adjust this based on testing
-  return score >= 30; // Lowered threshold slightly to catch more logos
+  return score >= 30;
 }
 
-// Find the SVG element at or near the clicked element
 function findSvgElement(element) {
-  // If the element itself is an SVG
   if (element.tagName && element.tagName.toLowerCase() === 'svg') {
     return element;
   }
   
-  // If it's an image/object/embed with SVG
   if (element.tagName && ['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
     const src = element.src || element.getAttribute('src') || '';
     const srcset = element.srcset || element.getAttribute('srcset') || '';
     const type = element.type || element.getAttribute('type') || '';
     
-    // Check if src contains .svg or if type is svg
     if (src.toLowerCase().endsWith('.svg') || 
         src.toLowerCase().includes('.svg?') || 
         src.toLowerCase().includes('/svg') || 
@@ -610,19 +556,32 @@ function findSvgElement(element) {
       return element;
     }
     
-    // Check if srcset contains svg
     if (srcset.toLowerCase().includes('.svg')) {
       return element;
     }
   }
   
-  // Check for SVG children
+  const bgImage = window.getComputedStyle(element).backgroundImage;
+  if (bgImage && bgImage !== 'none') {
+    const svgUrlMatch = bgImage.match(/url\(["']?(.*?\.svg[^"')]*?)["']?\)/i);
+    if (svgUrlMatch) {
+      const wrapper = document.createElement('img');
+      wrapper.src = svgUrlMatch[1];
+      wrapper._svgGrabProOriginal = element;
+      return wrapper;
+    }
+  }
+  
   const svgChild = element.querySelector('svg');
   if (svgChild) {
     return svgChild;
   }
   
-  // Check for SVG parent
+  if (element.shadowRoot) {
+    const shadowSvg = element.shadowRoot.querySelector('svg');
+    if (shadowSvg) return shadowSvg;
+  }
+  
   let parent = element.parentElement;
   while (parent) {
     if (parent.tagName && parent.tagName.toLowerCase() === 'svg') {
@@ -681,150 +640,115 @@ function initializeSvgGrabPro() {
   createCustomContextMenu();
 }
 
-// Function to copy SVG to clipboard
-function copySvgToClipboard() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Use the Clipboard API to write the SVG
-        navigator.clipboard.writeText(svgContent)
-          .then(() => {
-            showNotification('SVG copied to clipboard');
-          })
-          .catch(err => {
-            showNotification('Failed to copy SVG: ' + err.message);
-          });
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
-        showNotification('Failed to get SVG content');
-        return;
-      }
-      
-      // Use the Clipboard API to write the SVG
-      navigator.clipboard.writeText(svgContentResult)
-        .then(() => {
-          showNotification('SVG copied to clipboard');
-        })
-        .catch(err => {
-          showNotification('Failed to copy SVG: ' + err.message);
-        });
+function sanitizeSvg(svgString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svg = doc.documentElement;
+  
+  const dangerousTags = ['script', 'foreignObject', 'iframe', 'embed', 'object'];
+  dangerousTags.forEach(tag => {
+    const elements = svg.getElementsByTagName(tag);
+    while (elements.length > 0) {
+      elements[0].parentNode.removeChild(elements[0]);
     }
-  } catch (error) {
-    showNotification('Error copying SVG: ' + error.message);
+  });
+  
+  function removeEventHandlers(el) {
+    if (el.attributes) {
+      const toRemove = [];
+      for (let i = 0; i < el.attributes.length; i++) {
+        if (el.attributes[i].name.toLowerCase().startsWith('on')) {
+          toRemove.push(el.attributes[i].name);
+        }
+      }
+      toRemove.forEach(attr => el.removeAttribute(attr));
+    }
+    if (el.children) {
+      for (let i = 0; i < el.children.length; i++) {
+        removeEventHandlers(el.children[i]);
+      }
+    }
   }
+  removeEventHandlers(svg);
+  
+  const serializer = new XMLSerializer();
+  return serializer.serializeToString(svg);
 }
 
-// Function to download SVG as a file
+function copySvgToClipboard() {
+  getSvgContent(selectedSvgElement)
+    .then(svgContent => {
+      if (!svgContent) {
+        showNotification('Failed to get SVG content');
+        return;
+      }
+      const sanitized = sanitizeSvg(svgContent);
+      return navigator.clipboard.writeText(sanitized)
+        .then(() => showNotification('SVG copied to clipboard'));
+    })
+    .catch(err => {
+      showNotification('Failed to copy SVG: ' + err.message);
+    });
+}
+
 function downloadSvg() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Create a blob from the SVG content
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        
-        // Create a download link and click it
-        const a = document.createElement('a');
-        a.href = url;
-        
-        // Try to get a good filename from various sources
-        let filename = 'logo.svg';
-        
-        // Check if we can get a better name from the SVG or image
-        if (selectedSvgElement.alt) {
-          filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.id) {
-          filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.src) {
-          // Try to extract filename from URL
-          const urlParts = selectedSvgElement.src.split('/');
-          const lastPart = urlParts[urlParts.length - 1];
-          if (lastPart && lastPart.includes('.svg')) {
-            filename = lastPart;
-          }
-        }
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Cleanup
-        URL.revokeObjectURL(url);
-        showNotification('SVG downloaded successfully');
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
+  getSvgContent(selectedSvgElement)
+    .then(svgContent => {
+      if (!svgContent) {
         showNotification('Failed to get SVG content');
         return;
       }
       
-      // Create a blob from the SVG content
-      const blob = new Blob([svgContentResult], { type: 'image/svg+xml' });
+      svgContent = sanitizeSvg(svgContent);
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
-      
-      // Create a download link and click it
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'logo.svg';
+      
+      let filename = 'logo.svg';
+      if (selectedSvgElement.alt) {
+        filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
+      } else if (selectedSvgElement.id) {
+        filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
+      } else if (selectedSvgElement.src) {
+        const urlParts = selectedSvgElement.src.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        if (lastPart && lastPart.includes('.svg')) {
+          filename = lastPart;
+        }
+      }
+      
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
-      // Cleanup
       URL.revokeObjectURL(url);
       showNotification('SVG downloaded successfully');
-    }
-  } catch (error) {
-    showNotification('Error downloading SVG: ' + error.message);
-  }
+    })
+    .catch(err => {
+      showNotification('Error downloading SVG: ' + err.message);
+    });
 }
 
 // Function to get SVG content (handles different SVG formats)
+// Always returns a Promise for consistent handling
 function getSvgContent(element) {
-  if (!element) return null;
+  if (!element) return Promise.resolve(null);
   
-  // If it's an actual SVG element
   if (element.tagName.toLowerCase() === 'svg') {
-    // Clone the node to avoid modifying the original
     const clone = element.cloneNode(true);
-    
-    // Make sure all styles are included
     const computedStyle = window.getComputedStyle(element);
-    const styleAttributes = [
-      'fill', 'stroke', 'stroke-width', 'opacity', 'filter'
-    ];
+    const styleAttributes = ['fill', 'stroke', 'stroke-width', 'opacity', 'filter'];
     
-    // Apply computed styles if they're not already set as attributes
     styleAttributes.forEach(attr => {
       if (computedStyle[attr] && !clone.hasAttribute(attr)) {
         clone.setAttribute(attr, computedStyle[attr]);
       }
     });
     
-    return clone.outerHTML;
+    return Promise.resolve(clone.outerHTML);
   }
   
-  // If it's an SVG in an img, object, or embed
   if (['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
     const src = element.src || element.getAttribute('src') || '';
     
@@ -832,77 +756,50 @@ function getSvgContent(element) {
         src.toLowerCase().includes('.svg?') || 
         src.match(/\.svg/i)) {
       
-      // Create a placeholder while we fetch the SVG
       showNotification('Fetching SVG from source...');
+      const isCrossOrigin = isCrossOriginURL(src);
       
-      // Set up a promise to fetch the SVG content
-      return new Promise((resolve) => {
-        try {
-          // Check for cross-origin restrictions
-          const isCrossOrigin = isCrossOriginURL(src);
-          
-          // Use fetch to get the SVG content
-          fetch(src, { 
-            mode: isCrossOrigin ? 'cors' : 'no-cors', // Try CORS for cross-origin
-            credentials: 'same-origin',
-            cache: 'no-store'
-          })
-            .then(response => {
-              if (!response.ok) {
-                // If we get a specific error, throw it
-                if (response.status === 403 || response.status === 401) {
-                  throw new Error(`Access denied (${response.status}). This SVG is protected.`);
-                } else if (response.status === 404) {
-                  throw new Error(`SVG not found (404).`);
-                } else {
-                  throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
-                }
-              }
-              
-              // For successful responses, try to get the text
-              return response.text();
-            })
-            .then(svgContent => {
-              // Check if the content is actually SVG
-              if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
-                // Get only the SVG element (in case of extra content)
-                const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
-                if (svgMatch) {
-                  resolve(svgMatch[0]);
-                } else {
-                  resolve(svgContent); // Fall back to full content
-                }
-              } else {
-                // If we got content but it's not SVG, might be a CORS issue
-                if (isCrossOrigin) {
-                  showNotification('Cannot access SVG from different domain (CORS restriction)');
-                } else {
-                  showNotification('The source does not contain valid SVG');
-                }
-                resolve(null);
-              }
-            })
-            .catch(err => {
-              console.error('Error fetching SVG:', err);
-              
-              // Provide more user-friendly error messages
-              if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                showNotification('Cannot access SVG (CORS restriction or network error)');
-              } else {
-                showNotification('Could not fetch SVG: ' + err.message);
-              }
-              resolve(null);
-            });
-        } catch (error) {
-          console.error('Error initiating fetch:', error);
-          showNotification('Error accessing SVG source');
-          resolve(null);
-        }
-      });
+      return fetch(src, { 
+        mode: isCrossOrigin ? 'cors' : 'no-cors',
+        credentials: 'same-origin',
+        cache: 'no-store'
+      })
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 403 || response.status === 401) {
+              throw new Error(`Access denied (${response.status}). This SVG is protected.`);
+            } else if (response.status === 404) {
+              throw new Error(`SVG not found (404).`);
+            } else {
+              throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
+            }
+          }
+          return response.text();
+        })
+        .then(svgContent => {
+          if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
+            const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+            return svgMatch ? svgMatch[0] : svgContent;
+          }
+          if (isCrossOrigin) {
+            showNotification('Cannot access SVG from different domain (CORS restriction)');
+          } else {
+            showNotification('The source does not contain valid SVG');
+          }
+          return null;
+        })
+        .catch(err => {
+          if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            showNotification('Cannot access SVG (CORS restriction or network error)');
+          } else {
+            showNotification('Could not fetch SVG: ' + err.message);
+          }
+          return null;
+        });
     }
   }
   
-  return null;
+  return Promise.resolve(null);
 }
 
 // Create and show a notification
