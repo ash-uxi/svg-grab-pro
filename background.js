@@ -132,21 +132,6 @@ function injectScriptIfNeeded(tabId, frameId) {
   });
 }
 
-// Handle active tab changes (for toolbar button usage)
-chrome.action.onClicked.addListener((tab) => {
-  // When user clicks the extension icon in toolbar, inject the script to the active tab
-  if (tab.url && !tab.url.startsWith("chrome://") && 
-      !tab.url.startsWith("chrome-extension://") && 
-      !tab.url.startsWith("about:")) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["contentScript.js"]
-    }).catch(error => {
-      console.error("[SVG Grab Pro] Script injection error:", error);
-    });
-  }
-});
-
 // Listen for tab updates to inject content script when needed (if all-sites mode enabled)
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete' && tab.url && 

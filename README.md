@@ -37,7 +37,7 @@
 3. Confirm the installation
 
 ### Manual Installation
-1. Download the latest release from [GitHub Releases](https://github.com/yourusername/svg-grab-pro/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/ash-uxi/svg-grab-pro/releases)
 2. Unzip the downloaded file
 3. Open Chrome and go to `chrome://extensions/`
 4. Enable "Developer mode" in the top right
