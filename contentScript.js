@@ -538,20 +538,16 @@ function isLikelyLogo(element) {
   return score >= 30;
 }
 
-// Find the SVG element at or near the clicked element
 function findSvgElement(element) {
-  // If the element itself is an SVG
   if (element.tagName && element.tagName.toLowerCase() === 'svg') {
     return element;
   }
   
-  // If it's an image/object/embed with SVG
   if (element.tagName && ['object', 'img', 'embed'].includes(element.tagName.toLowerCase())) {
     const src = element.src || element.getAttribute('src') || '';
     const srcset = element.srcset || element.getAttribute('srcset') || '';
     const type = element.type || element.getAttribute('type') || '';
     
-    // Check if src contains .svg or if type is svg
     if (src.toLowerCase().endsWith('.svg') || 
         src.toLowerCase().includes('.svg?') || 
         src.toLowerCase().includes('/svg') || 
@@ -560,19 +556,32 @@ function findSvgElement(element) {
       return element;
     }
     
-    // Check if srcset contains svg
     if (srcset.toLowerCase().includes('.svg')) {
       return element;
     }
   }
   
-  // Check for SVG children
+  const bgImage = window.getComputedStyle(element).backgroundImage;
+  if (bgImage && bgImage !== 'none') {
+    const svgUrlMatch = bgImage.match(/url\(["']?(.*?\.svg[^"')]*?)["']?\)/i);
+    if (svgUrlMatch) {
+      const wrapper = document.createElement('img');
+      wrapper.src = svgUrlMatch[1];
+      wrapper._svgGrabProOriginal = element;
+      return wrapper;
+    }
+  }
+  
   const svgChild = element.querySelector('svg');
   if (svgChild) {
     return svgChild;
   }
   
-  // Check for SVG parent
+  if (element.shadowRoot) {
+    const shadowSvg = element.shadowRoot.querySelector('svg');
+    if (shadowSvg) return shadowSvg;
+  }
+  
   let parent = element.parentElement;
   while (parent) {
     if (parent.tagName && parent.tagName.toLowerCase() === 'svg') {
