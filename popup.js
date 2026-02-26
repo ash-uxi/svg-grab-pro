@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         } catch (e) {
             // If storage is not accessible, use an in-memory object
-            console.log("Storage not accessible, using in-memory storage");
+            
             const memoryStorage = {};
             return {
                 getItem: (key, callback) => {
@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to apply theme
     function applyTheme(theme) {
-        console.log("Applying theme:", theme);
         
         // Remove theme class
         document.body.classList.remove('dark-theme', 'light-theme');
@@ -79,16 +78,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use consistent key name 'svgGrabProTheme' across storage mechanisms
             storage.setItem('svgGrabProTheme', theme);
             
-            // Also set directly in localStorage for content script to find
-            localStorage.setItem('svgGrabProTheme', theme);
-            
             // Notify background script to update the icon
             chrome.runtime.sendMessage({
                 action: "themeChanged",
                 theme: theme
             });
         } catch (e) {
-            console.log("Could not save theme preference");
         }
     }
     
@@ -169,18 +164,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Directly handle click events for theme
     darkButton.onclick = function() {
-        console.log("Dark button clicked");
         applyTheme('dark');
     };
     
     lightButton.onclick = function() {
-        console.log("Light button clicked");
         applyTheme('light');
     };
     
     // Load saved theme or use default
     storage.getItem('svgGrabProTheme', function(storedTheme) {
-        console.log("Retrieved stored theme:", storedTheme);
         if (storedTheme && (storedTheme === 'dark' || storedTheme === 'light')) {
             applyTheme(storedTheme);
         } else {
