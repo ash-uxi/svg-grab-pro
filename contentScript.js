@@ -755,7 +755,7 @@ function getSvgContent(element) {
       }
     });
     
-    return clone.outerHTML;
+    return sanitizeSvgContent(clone.outerHTML);
   }
   
   // If it's an SVG in an img, object, or embed
@@ -922,11 +922,12 @@ function isCrossOriginURL(url) {
 // Listen for messages from background script asking for theme
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === "getTheme") {
-    // Return the current theme
     sendResponse({ theme: currentTheme });
+    return true;
   } else if (request.action === "ping") {
-    // Respond to ping to show we're active
     sendResponse({ status: "pong" });
+    return true;
   }
-  return true; // Keep the message channel open for async responses
+  // Don't return true for unrecognized messages — no sendResponse will be
+  // called, so keeping the port open just leaks it.
 });

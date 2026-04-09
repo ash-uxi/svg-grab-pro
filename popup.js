@@ -83,11 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // #15: Removed dead localStorage.setItem — popup's localStorage
             // belongs to the extension origin, invisible to content scripts.
 
-            // Notify background script to update the icon
-            chrome.runtime.sendMessage({
-                action: "themeChanged",
-                theme: theme
-            });
+            // #16: Removed themeChanged message — icon updates are handled
+            // solely via storage.onChanged in background.js.
         } catch (e) {
             console.log("Could not save theme preference");
         }
