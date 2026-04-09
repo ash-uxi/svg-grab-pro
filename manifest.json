@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SVG Grab Pro",
   "version": "1.2",
-  "description": "Easily grab SVG logos from any website",
+  "description": "Grab SVG logos from any website with a right-click",
   "icons": {
     "16": "images/dark/icon16.png",
     "48": "images/dark/icon48.png",
@@ -11,7 +11,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [],
   "optional_host_permissions": [
