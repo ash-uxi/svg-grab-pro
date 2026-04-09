@@ -132,20 +132,8 @@ function injectScriptIfNeeded(tabId, frameId) {
   });
 }
 
-// Handle active tab changes (for toolbar button usage)
-chrome.action.onClicked.addListener((tab) => {
-  // When user clicks the extension icon in toolbar, inject the script to the active tab
-  if (tab.url && !tab.url.startsWith("chrome://") && 
-      !tab.url.startsWith("chrome-extension://") && 
-      !tab.url.startsWith("about:")) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["contentScript.js"]
-    }).catch(error => {
-      console.error("[SVG Grab Pro] Script injection error:", error);
-    });
-  }
-});
+// #3: Removed chrome.action.onClicked listener — it never fires because
+// the manifest defines default_popup, which intercepts the click.
 
 // Listen for tab updates to inject content script when needed (if all-sites mode enabled)
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
@@ -159,11 +147,9 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
 // Listen for messages from content script or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Handle theme changes
-  if (message.action === "themeChanged" && message.theme) {
-    setIconForTheme(message.theme);
-  }
-  
+  // #16: Removed themeChanged message handler — icon updates are handled
+  // solely via storage.onChanged to avoid duplicate setIconForTheme calls.
+
   // Handle permission changes
   if (message.action === "permissionChanged") {
     // Synchronize permission state
@@ -191,10 +177,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Handle ping to check if content script is loaded
   if (message.action === "ping") {
     sendResponse({ status: "pong" });
-    return true; // Return true specifically for ping response
+    return true;
   }
-  
-  return true; // Keep the message channel open for async responses
+
+  // #7: Don't return true for non-ping messages — they never call
+  // sendResponse, so keeping the port open just leaks it.
 });
 
 // Listen for storage changes to update icon
@@ -206,20 +193,29 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 });
 
 // Log when extension is installed or updated
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   console.log('SVG Grab Pro extension installed successfully');
   // Initialize theme when extension is installed
   initializeTheme();
   
-  // Default to all-sites mode disabled
-  chrome.storage.local.set({ 'allSitesEnabled': false });
+  // #1: Only set the default on fresh install — not on update, which would
+  // wipe the user's saved preference.
+  if (details.reason === 'install') {
+    chrome.storage.local.set({ 'allSitesEnabled': false });
+  }
   
   // Ensure permissions are synchronized
   syncPermissionState();
 });
 
-// Periodically check permission state to ensure consistency
-setInterval(syncPermissionState, 60000); // Check every minute
+// #2: Use chrome.alarms instead of setInterval — MV3 service workers
+// terminate after ~30s of inactivity, so setInterval silently stops.
+chrome.alarms.create('syncPermissionState', { periodInMinutes: 1 });
+chrome.alarms.onAlarm.addListener(function(alarm) {
+  if (alarm.name === 'syncPermissionState') {
+    syncPermissionState();
+  }
+});
 
 // Initialize theme when background script runs
 initializeTheme();

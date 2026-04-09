@@ -5,7 +5,7 @@
 <h1 align="center">SVG Grab Pro</h1>
 
 <p align="center">
-  <strong>Easily extract SVG logos from any website with just a right-click</strong>
+  <strong>Extract SVG logos from any website with a right-click</strong>
 </p>
 
 <p align="center">
@@ -23,12 +23,12 @@
 
 ## Features
 
-✨ **Simple & Powerful** - Extract SVG logos with just a right-click  
-🔍 **Smart Detection** - Automatically identifies logo SVGs on websites  
-🎨 **Copy to Clipboard** - Instantly copy SVG code for use in design tools  
-💾 **Direct Download** - Save SVGs directly to your computer  
-🌓 **Dark/Light Mode** - Choose your preferred theme  
-🔒 **Privacy-Focused** - Runs locally with minimal permissions by default
+- **Right-click extraction** — copy or download SVG logos from any website
+- **Logo detection** — scores elements by size, position, parent context, and class/ID keywords to identify logos
+- **Clipboard support** — copy SVG markup for use in design tools
+- **File download** — save SVGs directly to disk
+- **Dark/Light mode** — choose your preferred theme
+- **Privacy-first** — runs locally with minimal permissions by default
 
 ## Installation
 
@@ -51,17 +51,15 @@
 
 ### Privacy Mode
 
-By default, SVG Grab Pro operates in privacy mode, meaning it only activates when you click the extension icon. If you prefer, you can enable "Run on all websites" in the extension popup for a more seamless experience.
+By default, SVG Grab Pro only activates when you click the extension icon. You can enable "Run on all websites" in the popup so the extension is always active.
 
 ## How it Works
 
-SVG Grab Pro uses advanced detection algorithms to identify SVG logos on websites. When you right-click on an SVG, it intelligently extracts the vector data, preserving all paths, styles, and attributes of the original SVG.
+SVG Grab Pro assigns a heuristic score to each element you right-click. It checks whether the element is an `<svg>` or an `<img>` with an `.svg` source, then factors in size, aspect ratio, viewport position, parent tag (`<header>`, `<nav>`, link to `/`), and class/ID keywords like `logo` or `brand`. Elements scoring above the threshold trigger the custom context menu.
 
 The extension works entirely locally on your machine and doesn't send any data to external servers.
 
 ## Privacy
-
-We take your privacy seriously:
 
 - No tracking or analytics
 - No data collection
@@ -71,7 +69,7 @@ We take your privacy seriously:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome — open a Pull Request.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)

@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return {
                     getItem: (key, callback) => {
                         chrome.storage.local.get(key, (result) => {
-                            callback(result[key] || null);
+                            // #8: Use strict undefined check — `|| null` coerces false to null
+                            callback(result[key] !== undefined ? result[key] : null);
                         });
                     },
                     setItem: (key, value) => {
@@ -79,14 +80,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Use consistent key name 'svgGrabProTheme' across storage mechanisms
             storage.setItem('svgGrabProTheme', theme);
             
-            // Also set directly in localStorage for content script to find
-            localStorage.setItem('svgGrabProTheme', theme);
-            
-            // Notify background script to update the icon
-            chrome.runtime.sendMessage({
-                action: "themeChanged",
-                theme: theme
-            });
+            // #15: Removed dead localStorage.setItem — popup's localStorage
+            // belongs to the extension origin, invisible to content scripts.
+
+            // #16: Removed themeChanged message — icon updates are handled
+            // solely via storage.onChanged in background.js.
         } catch (e) {
             console.log("Could not save theme preference");
         }
@@ -157,11 +155,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Always sync UI with actual permission state
                     syncPermissionUI();
                     
-                    // Notify background script
-                    chrome.runtime.sendMessage({
-                        action: "permissionChanged",
-                        allSitesEnabled: false
-                    });
+                    // #19: Only notify if the permission was actually removed
+                    if (removed) {
+                        chrome.runtime.sendMessage({
+                            action: "permissionChanged",
+                            allSitesEnabled: false
+                        });
+                    }
                 });
             }
         });

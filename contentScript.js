@@ -7,23 +7,18 @@ let currentTheme = 'light'; // Default theme
 let extensionEnabled = false;
 let extensionInitialized = false;
 
+// #10: Removed URL query string activation mechanism (svgGrabProAction).
+// #9: Removed all localStorage usage — content scripts share localStorage
+// with the host page, which allows fingerprinting and tampering.
 // Check if we should initialize on this page
 function shouldInitializeExtension() {
   return new Promise((resolve) => {
-    // If accessible, check chrome.storage
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get('allSitesEnabled', function(data) {
-        // Check if we are running in response to an explicit user action (like icon click)
-        const queryString = window.location.search;
-        const isExplicitAction = queryString.includes('svgGrabProAction=true');
-        
-        // Initialize if explicitly requested or all-sites mode is enabled
-        resolve(isExplicitAction || data.allSitesEnabled === true);
+        resolve(data.allSitesEnabled === true);
       });
     } else {
-      // Fallback to localStorage
-      const enabled = localStorage.getItem('svgGrabProAllSitesEnabled') === 'true';
-      resolve(enabled);
+      resolve(false);
     }
   });
 }
@@ -72,29 +67,13 @@ const themeVariables = `
   }
 `;
 
-// Initialize theme from storage
+// Initialize theme from chrome.storage only (#9: no localStorage)
 function initializeTheme() {
-  // First check localStorage (used by popup.js)
-  const localTheme = localStorage.getItem('svgGrabProTheme');
-  if (localTheme && (localTheme === 'dark' || localTheme === 'light')) {
-    currentTheme = localTheme;
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
-    }
-    return; // Exit if we found a theme in localStorage
-  }
-  
-  // Fall back to chrome.storage.local (to match popup.js)
   chrome.storage.local.get('svgGrabProTheme', function(data) {
     if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
       currentTheme = data.svgGrabProTheme;
-      // Also update localStorage for future consistency
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     } else {
-      // If no saved preference, default to dark theme (to match popup.js)
       currentTheme = 'dark';
-      localStorage.setItem('svgGrabProTheme', currentTheme);
     }
     updateThemeVariables();
     if (customContextMenu) {
@@ -103,14 +82,12 @@ function initializeTheme() {
   });
 }
 
-// Listen for theme changes from the popup
+// Listen for theme and permission changes from chrome.storage
 chrome.storage.onChanged.addListener(function(changes, namespace) {
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.svgGrabProTheme && 
       (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
     currentTheme = changes.svgGrabProTheme.newValue;
-    // Update localStorage to stay in sync
-    localStorage.setItem('svgGrabProTheme', currentTheme);
     updateThemeVariables();
     if (customContextMenu) {
       applyThemeToContextMenu();
@@ -121,7 +98,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
   if ((namespace === 'sync' || namespace === 'local') && 
       changes.allSitesEnabled !== undefined) {
     const isEnabled = changes.allSitesEnabled.newValue === true;
-    localStorage.setItem('svgGrabProAllSitesEnabled', isEnabled ? 'true' : 'false');
     // Handle dynamic enable/disable
     extensionEnabled = isEnabled;
     if (isEnabled && !extensionInitialized) {
@@ -132,20 +108,6 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
       hideCustomContextMenu();
       // Allow re-initialization when toggled back on
       extensionInitialized = false;
-    }
-  }
-});
-
-// Listen for storage events (in case localStorage is updated in another tab/window)
-window.addEventListener('storage', function(event) {
-  if (event.key === 'svgGrabProTheme' && 
-      (event.newValue === 'dark' || event.newValue === 'light')) {
-    currentTheme = event.newValue;
-    // Update chrome.storage to stay in sync
-    chrome.storage.local.set({ 'svgGrabProTheme': currentTheme });
-    updateThemeVariables();
-    if (customContextMenu) {
-      applyThemeToContextMenu();
     }
   }
 });
@@ -185,17 +147,8 @@ function applyThemeToContextMenu() {
   customContextMenu.style.boxShadow = 'var(--svg-grab-pro-shadow)';
   customContextMenu.style.borderColor = 'var(--svg-grab-pro-border)'; // Added border color
   
-  // Update menu options
-  const menuOptions = customContextMenu.querySelectorAll('.menu-option');
-  menuOptions.forEach(option => {
-    option.addEventListener('mouseover', function() {
-      this.style.backgroundColor = 'var(--svg-grab-pro-hover)';
-    });
-    option.addEventListener('mouseout', function() {
-      this.style.backgroundColor = 'transparent';
-    });
-  });
-  
+  // #12: Removed duplicate JS hover listeners — CSS .menu-option:hover handles this.
+
   // Update SVG stroke colors for icons
   const svgElements = customContextMenu.querySelectorAll('svg path');
   svgElements.forEach(path => {
@@ -225,10 +178,13 @@ function createCustomContextMenu() {
   // Only create the menu once
   if (customContextMenu) return;
   
-  // Inject theme variables
-  const styleEl = document.createElement('style');
-  styleEl.textContent = themeVariables;
-  document.head.appendChild(styleEl);
+  // #14: Check for existing style element before appending to avoid duplicates on toggle
+  if (!document.getElementById('svg-grab-pro-theme-vars')) {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'svg-grab-pro-theme-vars';
+    styleEl.textContent = themeVariables;
+    document.head.appendChild(styleEl);
+  }
   
   // Initialize theme
   initializeTheme();
@@ -255,8 +211,12 @@ function createCustomContextMenu() {
     transition: opacity 0.15s ease-out, transform 0.15s ease-out;
   `;
   
-  // Add animation styles
-  const animationStyleEl = document.createElement('style');
+  // #14: Reuse existing animation style element if present
+  let animationStyleEl = document.getElementById('svg-grab-pro-animations');
+  if (!animationStyleEl) {
+    animationStyleEl = document.createElement('style');
+    animationStyleEl.id = 'svg-grab-pro-animations';
+  }
   animationStyleEl.textContent = `
     @keyframes svgGrabProFadeIn {
       from { opacity: 0; transform: scale(0.98); }
@@ -299,7 +259,9 @@ function createCustomContextMenu() {
       align-items: center;
     }
   `;
-  document.head.appendChild(animationStyleEl);
+  if (!animationStyleEl.parentNode) {
+    document.head.appendChild(animationStyleEl);
+  }
 
   // Create Copy SVG option
   const copyOption = document.createElement('div');
@@ -437,12 +399,12 @@ function showCustomContextMenu(x, y) {
 
 // Hide custom context menu
 function hideCustomContextMenu() {
-  if (customContextMenu) {
-    customContextMenu.style.animation = 'svgGrabProFadeOut 0.1s ease-out';
-    setTimeout(() => {
-      customContextMenu.style.display = 'none';
-    }, 100);
-  }
+  // #17: Early return if menu is already hidden to avoid unnecessary work on scroll/resize
+  if (!customContextMenu || customContextMenu.style.display === 'none') return;
+  customContextMenu.style.animation = 'svgGrabProFadeOut 0.1s ease-out';
+  setTimeout(() => {
+    customContextMenu.style.display = 'none';
+  }, 100);
 }
 
 // Helper function to safely get class name as string
@@ -560,7 +522,8 @@ function isLikelyLogo(element) {
   parent = element.parentElement;
   if (parent && parent.tagName.toLowerCase() === 'a') {
     const href = parent.getAttribute('href');
-    if (href === '/' || href === '#' || href.includes('home')) {
+    // #4: Guard against null href — <a> elements without href return null
+    if (href && (href === '/' || href === '#' || href.includes('home'))) {
       score += 20;
     }
   }
@@ -581,8 +544,6 @@ function isLikelyLogo(element) {
     if (alt.includes(keyword)) score += 15;
     if (title.includes(keyword)) score += 15;
   }
-  
-  console.log('Logo detection score:', score, element);
   
   // Check threshold score - adjust this based on testing
   return score >= 30; // Lowered threshold slightly to catch more logos
@@ -681,122 +642,95 @@ function initializeSvgGrabPro() {
   createCustomContextMenu();
 }
 
+// #6: Shared filename detection used by both copy and download paths
+function getSvgFilename(element) {
+  if (element.alt) {
+    return element.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
+  }
+  if (element.id) {
+    return element.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
+  }
+  if (element.src) {
+    const urlParts = element.src.split('/');
+    const lastPart = urlParts[urlParts.length - 1];
+    if (lastPart && lastPart.includes('.svg')) {
+      return lastPart;
+    }
+  }
+  return 'logo.svg';
+}
+
+// #11: Strip dangerous content from fetched SVG strings
+function sanitizeSvgContent(svgString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+  if (!svg) return svgString;
+
+  // Remove <script> elements and <foreignObject>
+  svg.querySelectorAll('script, foreignObject').forEach(el => el.remove());
+
+  // Remove event handler attributes from all elements
+  const allEls = svg.querySelectorAll('*');
+  allEls.forEach(el => {
+    for (const attr of [...el.attributes]) {
+      if (attr.name.startsWith('on')) {
+        el.removeAttribute(attr.name);
+      }
+    }
+  });
+
+  return svg.outerHTML;
+}
+
+// #18: Normalize getSvgContent to always return a Promise, eliminating
+// the duplicated promise/sync branches in copy and download.
 // Function to copy SVG to clipboard
 function copySvgToClipboard() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Use the Clipboard API to write the SVG
-        navigator.clipboard.writeText(svgContent)
-          .then(() => {
-            showNotification('SVG copied to clipboard');
-          })
-          .catch(err => {
-            showNotification('Failed to copy SVG: ' + err.message);
-          });
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
+  Promise.resolve(getSvgContent(selectedSvgElement))
+    .then(svgContent => {
+      if (!svgContent) {
         showNotification('Failed to get SVG content');
         return;
       }
-      
-      // Use the Clipboard API to write the SVG
-      navigator.clipboard.writeText(svgContentResult)
+      navigator.clipboard.writeText(svgContent)
         .then(() => {
           showNotification('SVG copied to clipboard');
         })
         .catch(err => {
           showNotification('Failed to copy SVG: ' + err.message);
         });
-    }
-  } catch (error) {
-    showNotification('Error copying SVG: ' + error.message);
-  }
+    })
+    .catch(err => {
+      showNotification('Error copying SVG: ' + err.message);
+    });
 }
 
 // Function to download SVG as a file
 function downloadSvg() {
-  try {
-    const svgContentResult = getSvgContent(selectedSvgElement);
-    
-    // Handle promise if it's a fetch operation
-    if (svgContentResult instanceof Promise) {
-      svgContentResult.then(svgContent => {
-        if (!svgContent) {
-          showNotification('Failed to get SVG content');
-          return;
-        }
-        
-        // Create a blob from the SVG content
-        const blob = new Blob([svgContent], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        
-        // Create a download link and click it
-        const a = document.createElement('a');
-        a.href = url;
-        
-        // Try to get a good filename from various sources
-        let filename = 'logo.svg';
-        
-        // Check if we can get a better name from the SVG or image
-        if (selectedSvgElement.alt) {
-          filename = selectedSvgElement.alt.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.id) {
-          filename = selectedSvgElement.id.replace(/\s+/g, '-').toLowerCase() + '.svg';
-        } else if (selectedSvgElement.src) {
-          // Try to extract filename from URL
-          const urlParts = selectedSvgElement.src.split('/');
-          const lastPart = urlParts[urlParts.length - 1];
-          if (lastPart && lastPart.includes('.svg')) {
-            filename = lastPart;
-          }
-        }
-        
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Cleanup
-        URL.revokeObjectURL(url);
-        showNotification('SVG downloaded successfully');
-      });
-    } else {
-      // Regular synchronous SVG content
-      if (!svgContentResult) {
+  Promise.resolve(getSvgContent(selectedSvgElement))
+    .then(svgContent => {
+      if (!svgContent) {
         showNotification('Failed to get SVG content');
         return;
       }
-      
-      // Create a blob from the SVG content
-      const blob = new Blob([svgContentResult], { type: 'image/svg+xml' });
+
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(blob);
-      
-      // Create a download link and click it
+
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'logo.svg';
+      a.download = getSvgFilename(selectedSvgElement);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
-      // Cleanup
+
       URL.revokeObjectURL(url);
-      showNotification('SVG downloaded successfully');
-    }
-  } catch (error) {
-    showNotification('Error downloading SVG: ' + error.message);
-  }
+      showNotification('SVG downloaded');
+    })
+    .catch(err => {
+      showNotification('Error downloading SVG: ' + err.message);
+    });
 }
 
 // Function to get SVG content (handles different SVG formats)
@@ -821,7 +755,7 @@ function getSvgContent(element) {
       }
     });
     
-    return clone.outerHTML;
+    return sanitizeSvgContent(clone.outerHTML);
   }
   
   // If it's an SVG in an img, object, or embed
@@ -865,12 +799,13 @@ function getSvgContent(element) {
             .then(svgContent => {
               // Check if the content is actually SVG
               if (svgContent.includes('<svg') && svgContent.includes('</svg>')) {
-                // Get only the SVG element (in case of extra content)
-                const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*?<\/svg>/i);
+                // #5: Use greedy match so nested <svg> elements aren't truncated
+                const svgMatch = svgContent.match(/<svg[^>]*>[\s\S]*<\/svg>/i);
                 if (svgMatch) {
-                  resolve(svgMatch[0]);
+                  // #11: Sanitize fetched SVG to strip scripts and event handlers
+                  resolve(sanitizeSvgContent(svgMatch[0]));
                 } else {
-                  resolve(svgContent); // Fall back to full content
+                  resolve(sanitizeSvgContent(svgContent));
                 }
               } else {
                 // If we got content but it's not SVG, might be a CORS issue
@@ -987,11 +922,12 @@ function isCrossOriginURL(url) {
 // Listen for messages from background script asking for theme
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action === "getTheme") {
-    // Return the current theme
     sendResponse({ theme: currentTheme });
+    return true;
   } else if (request.action === "ping") {
-    // Respond to ping to show we're active
     sendResponse({ status: "pong" });
+    return true;
   }
-  return true; // Keep the message channel open for async responses
+  // Don't return true for unrecognized messages — no sendResponse will be
+  // called, so keeping the port open just leaks it.
 });
