@@ -56,7 +56,8 @@ function createContext() {
       innerWidth: 1200,
       location: {
         href: 'https://example.com/products',
-        origin: 'https://example.com'
+        origin: 'https://example.com',
+        search: ''
       },
       addEventListener() {}
     },
