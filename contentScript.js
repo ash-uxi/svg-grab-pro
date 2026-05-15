@@ -464,128 +464,210 @@ function getClassNameAsString(element) {
   return '';
 }
 
+const STRONG_LOGO_KEYWORDS = ['logo', 'logotype', 'logomark', 'brandmark', 'wordmark'];
+const SUPPORTING_LOGO_KEYWORDS = ['brand', 'branding', 'company', 'site-name', 'sitename', 'identity'];
+const COMMON_UI_ICON_KEYWORDS = [
+  'arrow', 'avatar', 'bell', 'calendar', 'caret', 'cart', 'chevron', 'clock',
+  'close', 'copy', 'download', 'email', 'facebook', 'github', 'hamburger',
+  'heart', 'instagram', 'linkedin', 'loader', 'mail', 'menu', 'minus',
+  'notification', 'pause', 'play', 'plus', 'search', 'settings', 'share',
+  'spinner', 'star', 'trash', 'twitter', 'upload', 'user', 'youtube'
+];
+
+function getAttributeValue(element, attributeName) {
+  if (!element) return '';
+  if (element.getAttribute) {
+    return element.getAttribute(attributeName) || '';
+  }
+  return element[attributeName] || '';
+}
+
+function hasKeywordSignal(value, keywords) {
+  const text = String(value || '').toLowerCase();
+  if (!text) return false;
+
+  const compactText = text.replace(/[^a-z0-9]/g, '');
+  const tokens = text.split(/[^a-z0-9]+/).filter(Boolean);
+
+  return keywords.some(keyword => {
+    const normalizedKeyword = keyword.toLowerCase();
+    const compactKeyword = normalizedKeyword.replace(/[^a-z0-9]/g, '');
+    return tokens.includes(normalizedKeyword) || compactText.includes(compactKeyword);
+  });
+}
+
+function getElementSignals(element) {
+  return [
+    element.id || '',
+    getClassNameAsString(element),
+    getAttributeValue(element, 'aria-label'),
+    getAttributeValue(element, 'alt'),
+    getAttributeValue(element, 'title'),
+    getAttributeValue(element, 'role')
+  ].join(' ');
+}
+
+function isSvgSourceElement(element) {
+  const src = element.src || getAttributeValue(element, 'src');
+  const srcset = element.srcset || getAttributeValue(element, 'srcset');
+  const type = element.type || getAttributeValue(element, 'type');
+  const normalizedSrc = String(src || '').toLowerCase();
+  const normalizedSrcset = String(srcset || '').toLowerCase();
+
+  return normalizedSrc.endsWith('.svg') ||
+    normalizedSrc.includes('.svg?') ||
+    normalizedSrc.includes('/svg') ||
+    normalizedSrc.match(/\.svg/i) ||
+    normalizedSrcset.includes('.svg') ||
+    type === 'image/svg+xml';
+}
+
+function isHomepageHref(href) {
+  const trimmedHref = String(href || '').trim();
+  if (!trimmedHref || trimmedHref === '#') return false;
+
+  try {
+    const targetUrl = new URL(trimmedHref, window.location.href);
+    const currentUrl = new URL(window.location.href);
+    const normalizedPath = targetUrl.pathname.replace(/\/+$/, '');
+
+    return targetUrl.origin === currentUrl.origin &&
+      (normalizedPath === '' || normalizedPath === '/home' || normalizedPath === '/index.html');
+  } catch (e) {
+    return false;
+  }
+}
+
+function closestHomepageLink(element) {
+  let parent = element.parentElement;
+  let depth = 0;
+  const maxDepth = 4;
+
+  while (parent && depth < maxDepth) {
+    if (parent.tagName && parent.tagName.toLowerCase() === 'a' && isHomepageHref(getAttributeValue(parent, 'href'))) {
+      return parent;
+    }
+
+    parent = parent.parentElement;
+    depth++;
+  }
+
+  return null;
+}
+
 // Helper function to check if an element is likely a logo
 function isLikelyLogo(element) {
   if (!element || !element.tagName) return false;
-  
-  // Initialize score
+
+  const tagName = element.tagName.toLowerCase();
   let score = 0;
+  let hasBrandSignal = false;
+  let hasHeaderContext = false;
+  let hasNegativeSignal = false;
+  let isTopOrLeft = false;
   
-  // SVG elements get direct handling
-  if (element.tagName.toLowerCase() === 'svg') {
-    score += 15; // Base score for being an SVG
-    
-    // Look at size - logos tend to be compact
-    const rect = element.getBoundingClientRect();
-    if (rect.width > 20 && rect.width < 400 && rect.height > 20 && rect.height < 200) {
-      score += 10;
+  if (tagName === 'svg') {
+    score += 10;
+  } else if (['object', 'img', 'embed'].includes(tagName) && isSvgSourceElement(element)) {
+    score += 14;
+  } else {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect ? element.getBoundingClientRect() : null;
+  if (rect && rect.width > 0 && rect.height > 0) {
+    if (rect.width < 12 || rect.height < 12) return false;
+
+    if (rect.width <= 500 && rect.height <= 220) {
+      score += 8;
     }
-    
-    // Check aspect ratio - logos tend to be somewhat square-ish
+
+    if (rect.width >= 40 && rect.height >= 20) {
+      score += 6;
+    } else if (rect.width < 32 && rect.height < 32) {
+      score -= 12;
+    }
+
     const ratio = rect.width / rect.height;
-    if (ratio > 0.5 && ratio < 3) {
-      score += 10;
+    if (ratio >= 0.25 && ratio <= 8) {
+      score += 4;
+    } else {
+      score -= 10;
     }
-    
-    // Check position - logos tend to be in the top or left of the page
-    if (rect.top < window.innerHeight * 0.3 || rect.left < window.innerWidth * 0.2) {
-      score += 15;
-    }
-  } 
-  // Special handling for img tags with SVG sources
-  else if (element.tagName.toLowerCase() === 'img') {
-    const src = element.src || element.getAttribute('src') || '';
-    const alt = element.alt || element.getAttribute('alt') || '';
-    
-    // Check if it's an SVG image
-    if (src.toLowerCase().endsWith('.svg') || 
-        src.toLowerCase().includes('.svg?') || 
-        src.match(/\.svg/i)) {
-      score += 20; // Higher score for explicit SVG images
-      
-      // Size checks for logos
-      const rect = element.getBoundingClientRect();
-      if (rect.width > 20 && rect.width < 400 && rect.height > 20 && rect.height < 200) {
-        score += 15;
-      }
-      
-      // Position check
-      if (rect.top < window.innerHeight * 0.3 || rect.left < window.innerWidth * 0.2) {
-        score += 15;
-      }
-      
-      // Check alt text for logo indicators
-      const logoKeywords = ['logo', 'brand', 'company', 'site', 'icon', 'emblem'];
-      for (const keyword of logoKeywords) {
-        if (alt.toLowerCase().includes(keyword)) {
-          score += 20; // Strong indicator from alt text
-          break;
-        }
-      }
+
+    isTopOrLeft = rect.top < window.innerHeight * 0.35 || rect.left < window.innerWidth * 0.25;
+    if (isTopOrLeft) {
+      score += 8;
     }
   }
+
+  const elementSignals = getElementSignals(element);
+  if (hasKeywordSignal(elementSignals, STRONG_LOGO_KEYWORDS)) {
+    score += 32;
+    hasBrandSignal = true;
+  }
+
+  if (hasKeywordSignal(elementSignals, SUPPORTING_LOGO_KEYWORDS)) {
+    score += 16;
+    hasBrandSignal = true;
+  }
+
+  if (hasKeywordSignal(elementSignals, COMMON_UI_ICON_KEYWORDS)) {
+    score -= 36;
+    hasNegativeSignal = true;
+  }
   
-  // Check if it's in header/nav/footer areas - this applies to both svg and img elements
   let parent = element.parentElement;
   let depth = 0;
-  const maxDepth = 6; // Only check up to 6 levels up
+  const maxDepth = 6;
   
   while (parent && depth < maxDepth) {
     const tagName = parent.tagName.toLowerCase();
-    const id = parent.id ? parent.id.toLowerCase() : '';
-    const className = getClassNameAsString(parent);
+    const parentSignals = getElementSignals(parent);
     
-    // Check for common header/nav/footer elements
-    if (tagName === 'header' || tagName === 'nav' || tagName === 'footer') {
-      score += 20;
-      break;
+    if (tagName === 'header' || tagName === 'nav') {
+      score += 14;
+      hasHeaderContext = true;
+    } else if (tagName === 'footer') {
+      score += 4;
     }
-    
-    // Check for common ID/class patterns
-    if (id.includes('header') || id.includes('nav') || id.includes('footer') || 
-        id.includes('logo') || id.includes('brand')) {
-      score += 15;
+
+    if (hasKeywordSignal(parentSignals, ['header', 'nav', 'navbar', 'masthead'])) {
+      score += 10;
+      hasHeaderContext = true;
+    } else if (hasKeywordSignal(parentSignals, ['footer'])) {
+      score += 3;
     }
-    
-    if (className.includes('header') || className.includes('nav') || className.includes('footer') || 
-        className.includes('logo') || className.includes('brand')) {
-      score += 15;
+
+    if (hasKeywordSignal(parentSignals, STRONG_LOGO_KEYWORDS)) {
+      score += 26;
+      hasBrandSignal = true;
+    }
+
+    if (hasKeywordSignal(parentSignals, SUPPORTING_LOGO_KEYWORDS)) {
+      score += 12;
+      hasBrandSignal = true;
+    }
+
+    if (hasKeywordSignal(parentSignals, COMMON_UI_ICON_KEYWORDS)) {
+      score -= 30;
+      hasNegativeSignal = true;
     }
     
     parent = parent.parentElement;
     depth++;
   }
-  
-  // Check if it's wrapped in a link to the homepage
-  parent = element.parentElement;
-  if (parent && parent.tagName.toLowerCase() === 'a') {
-    const href = parent.getAttribute('href');
-    if (href === '/' || href === '#' || href.includes('home')) {
-      score += 20;
-    }
+
+  if (closestHomepageLink(element)) {
+    score += 28;
+    hasBrandSignal = true;
   }
   
-  // Check for common logo/brand-related attributes
-  const id = element.id ? element.id.toLowerCase() : '';
-  const className = getClassNameAsString(element);
-  const ariaLabel = element.getAttribute('aria-label') ? element.getAttribute('aria-label').toLowerCase() : '';
-  const alt = element.getAttribute('alt') ? element.getAttribute('alt').toLowerCase() : '';
-  const title = element.getAttribute('title') ? element.getAttribute('title').toLowerCase() : '';
-  
-  const logoKeywords = ['logo', 'brand', 'company', 'site', 'icon', 'emblem'];
-  
-  for (const keyword of logoKeywords) {
-    if (id.includes(keyword)) score += 15;
-    if (className.includes(keyword)) score += 15;
-    if (ariaLabel.includes(keyword)) score += 15;
-    if (alt.includes(keyword)) score += 15;
-    if (title.includes(keyword)) score += 15;
+  if (hasBrandSignal) {
+    return score >= 44;
   }
-  
-  console.log('Logo detection score:', score, element);
-  
-  // Check threshold score - adjust this based on testing
-  return score >= 30; // Lowered threshold slightly to catch more logos
+
+  return score >= 58 && hasHeaderContext && isTopOrLeft && !hasNegativeSignal;
 }
 
 // Find the SVG element at or near the clicked element
