@@ -1,0 +1,7 @@
+{
+  "name": "svg-grab-pro",
+  "private": true,
+  "scripts": {
+    "test": "node tests/contentScript.logoDetection.test.js"
+  }
+}
