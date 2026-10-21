@@ -1,0 +1,5 @@
+node_modules
+contentScript.js
+background.js
+popup.js
+*.min.js

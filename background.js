@@ -1,228 +1,111 @@
-// Background script handles icon switching based on theme and basic message handling
-// Also manages content script injection based on permissions
+(() => {
+  // src/shared/constants.js
+  var STORAGE_KEYS = {
+    theme: "svgGrabProTheme",
+    allSitesEnabled: "allSitesEnabled",
+    /** Light/dark scheme the toolbar icon should match (resolved from "system" by the popup). */
+    iconScheme: "iconScheme"
+  };
+  var MESSAGES = {
+    fetchSvg: "fetchSvg"
+  };
+  var ALL_SITES = { origins: ["<all_urls>"] };
+  var CONTENT_SCRIPT_ID = "svg-grab-pro";
 
-// Function to set icon based on theme
-function setIconForTheme(theme) {
-  const iconPath = theme === 'light' 
-    ? {
-        16: "images/light/icon16.png",
-        48: "images/light/icon48.png",
-        128: "images/light/icon128.png"
-      }
-    : {
-        16: "images/dark/icon16.png",
-        48: "images/dark/icon48.png",
-        128: "images/dark/icon128.png"
-      };
-  
-  chrome.action.setIcon({ path: iconPath });
-  console.log(`[SVG Grab Pro] Icon updated to ${theme} theme`);
-}
+  // src/shared/is-injectable-url.js
+  var WEB_STORE_RE = /^https:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)\//;
+  function isInjectableUrl(url) {
+    if (!url) return false;
+    return /^(https?|file):/.test(url) && !WEB_STORE_RE.test(url);
+  }
 
-// Initialize icon based on saved theme
-function initializeTheme() {
-  // First check localStorage through content script messaging
-  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: "getTheme" }, function(response) {
-        // Check for runtime.lastError to prevent the unchecked error
-        if (chrome.runtime.lastError) {
-          // Content script isn't available, fall back to storage
-          checkStorageTheme();
-          return;
-        }
-        
-        if (response && response.theme) {
-          setIconForTheme(response.theme);
-          return;
-        } else {
-          // If no response from content script, check chrome.storage
-          checkStorageTheme();
-        }
-      });
-    } else {
-      // No active tab, check chrome.storage
-      checkStorageTheme();
-    }
-  });
-}
-
-function checkStorageTheme() {
-  // Check chrome.storage.local (used by popup.js)
-  chrome.storage.local.get('svgGrabProTheme', function(data) {
-    if (data.svgGrabProTheme && (data.svgGrabProTheme === 'dark' || data.svgGrabProTheme === 'light')) {
-      setIconForTheme(data.svgGrabProTheme);
-    } else {
-      // Default to dark theme if no saved preference
-      setIconForTheme('dark');
-    }
-  });
-}
-
-// Verify that permissions and storage state are in sync
-function syncPermissionState() {
-  chrome.permissions.contains({
-    origins: ["<all_urls>"]
-  }, function(hasPermission) {
-    chrome.storage.local.get('allSitesEnabled', function(data) {
-      // If there's a mismatch, update storage to match actual permission state
-      if (hasPermission !== !!data.allSitesEnabled) {
-        chrome.storage.local.set({ 'allSitesEnabled': hasPermission });
-        console.log(`[SVG Grab Pro] Synchronized permission state: ${hasPermission}`);
-      }
-    });
-  });
-}
-
-// Check if all-sites mode is enabled and inject content script if needed
-function checkAndInjectContentScript(tabId, frameId = 0) {
-  // First verify permission sync state
-  syncPermissionState();
-  
-  // Now check if we should inject
-  chrome.storage.local.get('allSitesEnabled', function(data) {
-    if (data.allSitesEnabled === true) {
-      // Double-check we have permission before attempting injection
-      chrome.permissions.contains({
-        origins: ["<all_urls>"]
-      }, function(hasPermission) {
-        if (hasPermission) {
-          // Check if the script is already injected to avoid duplicates
-          chrome.tabs.sendMessage(tabId, { action: "ping" }, function(response) {
-            // Handle runtime.lastError to prevent unchecked error
-            if (chrome.runtime.lastError) {
-              // Script not injected, proceed with injection
-              injectScriptIfNeeded(tabId, frameId);
-              return;
-            }
-            
-            if (!response) {
-              injectScriptIfNeeded(tabId, frameId);
-            }
-          });
-        } else {
-          // We don't have permission, make sure storage reflects this
-          chrome.storage.local.set({ 'allSitesEnabled': false });
-        }
-      });
-    }
-  });
-}
-
-// Helper function to inject script if tab exists and URL is valid
-function injectScriptIfNeeded(tabId, frameId) {
-  // Only proceed if the tab is still valid
-  chrome.tabs.get(tabId, function(tab) {
-    if (chrome.runtime.lastError) {
-      return; // Tab doesn't exist anymore
-    }
-    
-    // Skip chrome:// and other restricted URLs
-    if (tab.url && !tab.url.startsWith("chrome://") && 
-        !tab.url.startsWith("chrome-extension://") && 
-        !tab.url.startsWith("about:")) {
-      // Script not injected, inject it now
-      chrome.scripting.executeScript({
-        target: { tabId: tabId, frameIds: [frameId] },
-        files: ["contentScript.js"]
-      }).catch(error => {
-        console.error("[SVG Grab Pro] Script injection error:", error);
-      });
-    }
-  });
-}
-
-// Handle active tab changes (for toolbar button usage)
-chrome.action.onClicked.addListener((tab) => {
-  // When user clicks the extension icon in toolbar, inject the script to the active tab
-  if (tab.url && !tab.url.startsWith("chrome://") && 
-      !tab.url.startsWith("chrome-extension://") && 
-      !tab.url.startsWith("about:")) {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ["contentScript.js"]
-    }).catch(error => {
-      console.error("[SVG Grab Pro] Script injection error:", error);
+  // src/background/index.js
+  var MAX_SVG_BYTES = 5e6;
+  function setIcon(scheme) {
+    const path = Object.fromEntries(
+      [16, 48, 128].map((size) => [size, `images/${scheme}/icon${size}.png`])
+    );
+    return chrome.action.setIcon({ path }).catch(() => {
     });
   }
-});
-
-// Listen for tab updates to inject content script when needed (if all-sites mode enabled)
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  if (changeInfo.status === 'complete' && tab.url && 
-      !tab.url.startsWith("chrome://") && 
-      !tab.url.startsWith("chrome-extension://") && 
-      !tab.url.startsWith("about:")) {
-    checkAndInjectContentScript(tabId);
+  async function restoreIcon() {
+    const data = await chrome.storage.local.get(STORAGE_KEYS.iconScheme);
+    setIcon(data[STORAGE_KEYS.iconScheme] === "light" ? "light" : "dark");
   }
-});
-
-// Listen for messages from content script or popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Handle theme changes
-  if (message.action === "themeChanged" && message.theme) {
-    setIconForTheme(message.theme);
+  function injectInto(tabId) {
+    return chrome.scripting.executeScript({ target: { tabId }, files: ["contentScript.js"] }).catch(() => {
+    });
   }
-  
-  // Handle permission changes
-  if (message.action === "permissionChanged") {
-    // Synchronize permission state
-    syncPermissionState();
-    
-    if (message.allSitesEnabled === true) {
-      // When permissions are granted, inject content script into all current tabs
-      chrome.tabs.query({}, function(tabs) {
-        for (let tab of tabs) {
-          if (tab.url && !tab.url.startsWith("chrome://") && 
-              !tab.url.startsWith("chrome-extension://") && 
-              !tab.url.startsWith("about:")) {
-            checkAndInjectContentScript(tab.id);
-          }
+  async function syncAllSitesAccess() {
+    const granted = await chrome.permissions.contains(ALL_SITES);
+    const registered = await chrome.scripting.getRegisteredContentScripts({
+      ids: [CONTENT_SCRIPT_ID]
+    });
+    if (granted && registered.length === 0) {
+      await chrome.scripting.registerContentScripts([
+        {
+          id: CONTENT_SCRIPT_ID,
+          matches: ["<all_urls>"],
+          js: ["contentScript.js"],
+          runAt: "document_idle"
         }
-      });
+      ]);
+      const tabs = await chrome.tabs.query({});
+      await Promise.all(
+        tabs.filter((tab) => tab.id && isInjectableUrl(tab.url)).map((tab) => injectInto(
+          /** @type {number} */
+          tab.id
+        ))
+      );
+    } else if (!granted && registered.length > 0) {
+      await chrome.scripting.unregisterContentScripts({ ids: [CONTENT_SCRIPT_ID] });
+    }
+    await chrome.storage.local.set({ [STORAGE_KEYS.allSitesEnabled]: granted });
+  }
+  async function fetchSvg(url) {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return { error: "That SVG address isn\u2019t valid." };
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:")
+      return { error: "Unsupported address." };
+    if (!await chrome.permissions.contains({ origins: [`${parsed.origin}/*`] }))
+      return { error: "no-access" };
+    try {
+      const response = await fetch(parsed.href, { credentials: "omit", redirect: "follow" });
+      if (!response.ok) return { error: `The site returned ${response.status} for this SVG.` };
+      if (Number(response.headers.get("content-length")) > MAX_SVG_BYTES) {
+        return { error: "This SVG is too large to grab." };
+      }
+      const text = await response.text();
+      if (text.length > MAX_SVG_BYTES) return { error: "This SVG is too large to grab." };
+      if (!/<svg[\s>]/i.test(text)) return { error: "That file isn\u2019t a valid SVG." };
+      return { text };
+    } catch {
+      return { error: "Couldn\u2019t reach the server hosting this SVG." };
     }
   }
-  
-  // Handle status messages
-  if (message.status) {
-    console.log(`[SVG Grab Pro] ${message.status}`);
-  }
-  
-  // Handle ping to check if content script is loaded
-  if (message.action === "ping") {
-    sendResponse({ status: "pong" });
-    return true; // Return true specifically for ping response
-  }
-  
-  return true; // Keep the message channel open for async responses
-});
-
-// Listen for storage changes to update icon
-chrome.storage.onChanged.addListener(function(changes, namespace) {
-  if (namespace === 'local' && changes.svgGrabProTheme && 
-      (changes.svgGrabProTheme.newValue === 'dark' || changes.svgGrabProTheme.newValue === 'light')) {
-    setIconForTheme(changes.svgGrabProTheme.newValue);
-  }
-});
-
-// Log when extension is installed or updated
-chrome.runtime.onInstalled.addListener(() => {
-  console.log('SVG Grab Pro extension installed successfully');
-  // Initialize theme when extension is installed
-  initializeTheme();
-  
-  // Default to all-sites mode disabled
-  chrome.storage.local.set({ 'allSitesEnabled': false });
-  
-  // Ensure permissions are synchronized
-  syncPermissionState();
-});
-
-// Periodically check permission state to ensure consistency
-setInterval(syncPermissionState, 60000); // Check every minute
-
-// Initialize theme when background script runs
-initializeTheme();
-
-// Initial permission sync
-syncPermissionState();
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.action === MESSAGES.fetchSvg && sender.id === chrome.runtime.id && sender.tab) {
+      fetchSvg(String(message.url)).then(sendResponse);
+      return true;
+    }
+    return false;
+  });
+  chrome.permissions.onAdded.addListener(syncAllSitesAccess);
+  chrome.permissions.onRemoved.addListener(syncAllSitesAccess);
+  chrome.storage.onChanged.addListener((changes, area) => {
+    const scheme = changes[STORAGE_KEYS.iconScheme]?.newValue;
+    if (area === "local" && (scheme === "light" || scheme === "dark")) setIcon(scheme);
+  });
+  chrome.runtime.onInstalled.addListener(() => {
+    syncAllSitesAccess();
+    restoreIcon();
+  });
+  chrome.runtime.onStartup.addListener(() => {
+    syncAllSitesAccess();
+    restoreIcon();
+  });
+})();
