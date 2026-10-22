@@ -1,4 +1,3 @@
-import { svgToPngBlob } from '../lib/rasterize.js';
 import { writeClipboard } from '../shared/clipboard.js';
 import { downloadBlob } from '../shared/download.js';
 import { GrabError } from './resolve.js';
@@ -8,8 +7,6 @@ import { GrabError } from './resolve.js';
 const FAILURE_MESSAGES = {
   'copy-svg': 'Couldn’t copy this SVG.',
   'download-svg': 'Couldn’t download this SVG.',
-  'copy-png': 'Couldn’t copy this as a PNG.',
-  'download-png': 'Couldn’t export this as a PNG.',
 };
 
 /**
@@ -30,14 +27,6 @@ export async function runAction(action, { svg, name, ui }) {
       case 'download-svg':
         downloadBlob(new Blob([await svg], { type: 'image/svg+xml' }), `${name}.svg`);
         ui.toast(`Saved ${name}.svg`);
-        break;
-      case 'copy-png':
-        await writeClipboard('image/png', svg.then(svgToPngBlob));
-        ui.toast(`Copied ${name} as PNG`);
-        break;
-      case 'download-png':
-        downloadBlob(await svgToPngBlob(await svg), `${name}.png`);
-        ui.toast(`Saved ${name}.png`);
         break;
     }
   } catch (error) {

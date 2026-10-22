@@ -128,6 +128,7 @@ export const UI_STYLES = `
 
 .item {
   all: unset;
+  box-sizing: border-box; /* all: unset resets it, so width: 100% plus padding overflowed */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -146,18 +147,6 @@ export const UI_STYLES = `
 .menu[data-error] .item { color: var(--faint); }
 .menu[data-error] .thumb { color: var(--danger); }
 .item:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
-kbd {
-  font: 500 11px/16px var(--font);
-  color: var(--faint);
-  min-width: 18px;
-  text-align: center;
-}
-.foot {
-  padding: 6px 8px 3px;
-  font-size: 11px;
-  line-height: 15px;
-  color: var(--faint);
-}
 
 /* ——— Highlight ——— */
 .ring {
@@ -220,6 +209,8 @@ kbd {
 }
 .toast-icon svg { width: 14px; height: 14px; stroke-width: 2.5; }
 .toast[data-tone="error"] .toast-icon { background: var(--danger); }
+/* The dark theme's brighter green needs a dark check for contrast. */
+:host([data-scheme="dark"]) .toast[data-tone="success"] .toast-icon { color: #000; }
 .toast[data-tone="pending"] .toast-icon { background: var(--hover); }
 .toast[data-tone="pending"] .toast-icon::after {
   content: "";

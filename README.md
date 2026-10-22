@@ -23,7 +23,7 @@
 
 ## Features
 
-✨ **Right-click any SVG** - Copy or download it straight from the page, as SVG or PNG  
+✨ **Right-click any SVG** - Copy or download it straight from the page  
 🖼️ **Every SVG on the page** - Open the popup to browse them all, logos first, and download everything as a .zip  
 🔍 **Finds what others miss** - Inline SVGs, SVG images, CSS backgrounds and masks, sprites, shadow DOM, and SVGs hidden under overlays  
 🎯 **Copies that actually work** - Styles from the page's CSS, `currentColor`, and shared gradients/sprites are baked in, so pastes render the same in Figma or your editor  
@@ -50,8 +50,7 @@
 ### Right-click
 
 1. **Right-click any SVG** on a website (logos, icons, illustrations)
-2. **Choose** Copy SVG, Download SVG, Copy as PNG or Download PNG
-3. Keyboard: `C` copy, `D` download, `⇧C` / `⇧D` for PNG, arrows + Enter to navigate, Esc to close
+2. **Choose** Copy SVG or Download SVG
 
 Hold **Shift** while right-clicking to get the browser's normal menu.
 
