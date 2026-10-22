@@ -23,20 +23,22 @@
 
 ## Features
 
-✨ **Simple & Powerful** - Extract SVG logos with just a right-click  
-🔍 **Smart Detection** - Automatically identifies logo SVGs on websites  
-🎨 **Copy to Clipboard** - Instantly copy SVG code for use in design tools  
-💾 **Direct Download** - Save SVGs directly to your computer  
-🌓 **Dark/Light Mode** - Choose your preferred theme  
-🔒 **Privacy-Focused** - Runs locally with minimal permissions by default
+✨ **Right-click any SVG** - Copy or download it straight from the page, as SVG or PNG  
+🖼️ **Every SVG on the page** - Open the popup to browse them all, logos first, and download everything as a .zip  
+🔍 **Finds what others miss** - Inline SVGs, SVG images, CSS backgrounds and masks, sprites, shadow DOM, and SVGs hidden under overlays  
+🎯 **Copies that actually work** - Styles from the page's CSS, `currentColor`, and shared gradients/sprites are baked in, so pastes render the same in Figma or your editor  
+🌓 **System, light or dark** - Follows your OS by default  
+🔒 **Privacy-focused** - Runs locally, no tracking, no remote fonts, minimal permissions by default
 
 ## Installation
 
 ### Chrome Web Store
+
 1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/dcojkoaanbhlnealhdcdjbcoaokkngch?utm_source=item-share-cb)
-3. Confirm the installation
+2. Confirm the installation
 
 ### Manual Installation
+
 1. Download the latest release from [GitHub Releases](https://github.com/yourusername/svg-grab-pro/releases)
 2. Unzip the downloaded file
 3. Open Chrome and go to `chrome://extensions/`
@@ -45,19 +47,27 @@
 
 ## Usage
 
-1. **Find any SVG logo** on a website
-2. **Right-click** on the logo
-3. **Choose "Copy" or "Download"** from the context menu
+### Right-click
 
-### Privacy Mode
+1. **Right-click any SVG** on a website (logos, icons, illustrations)
+2. **Choose** Copy SVG, Download SVG, Copy as PNG or Download PNG
+3. Keyboard: `C` copy, `D` download, `⇧C` / `⇧D` for PNG, arrows + Enter to navigate, Esc to close
 
-By default, SVG Grab Pro operates in privacy mode, meaning it only activates when you click the extension icon. If you prefer, you can enable "Run on all websites" in the extension popup for a more seamless experience.
+Hold **Shift** while right-clicking to get the browser's normal menu.
+
+### Popup
+
+Click the toolbar icon (or press `Alt+Shift+S`) to see every SVG on the current page. Click a tile to copy it, hover for SVG/PNG downloads, and hover any tile to outline it on the page. **Download all** saves a .zip.
+
+### All sites
+
+By default SVG Grab Pro only runs on a tab after you open its popup there. Turn on **All sites** to right-click SVGs on any page without opening the popup first; this also lets it fetch SVG files hosted on other domains (CDNs) that the page's own CORS rules would block.
 
 ## How it Works
 
-SVG Grab Pro uses advanced detection algorithms to identify SVG logos on websites. When you right-click on an SVG, it intelligently extracts the vector data, preserving all paths, styles, and attributes of the original SVG.
-
-The extension works entirely locally on your machine and doesn't send any data to external servers.
+- **Finding the SVG**: right-clicks look at the element under the cursor, small wrappers that paint an SVG with CSS (`background-image`, `mask-image`, `::before`), and elements stacked beneath transparent overlays, including inside open shadow roots. Big containers and text selections are left to the browser's menu.
+- **Making it standalone**: inline SVGs are cloned with their computed styles written back as attributes (only where they differ from what's inherited), `<use>` sprites and `url(#…)` gradients, clips and masks from elsewhere on the page (or from external sprite files) are pulled into `<defs>`, and page noise (`class`, `data-*`, `aria-*`, event handlers) is stripped. The root gets an explicit `viewBox` and size.
+- **Logos**: a heuristic scores elements by labels, header placement, home links and size, so the popup can rank logos first and files get names like `github-logo.svg`.
 
 ## Privacy
 
@@ -68,6 +78,17 @@ We take your privacy seriously:
 - No external servers
 - Minimal permissions by default
 - All processing happens locally on your device
+
+## Development
+
+```bash
+npm install
+npm test        # unit tests (vitest + jsdom)
+npm run build   # bundles src/ into contentScript.js, background.js and popup.js
+npm run package # builds, then zips the runtime files to dist/ for the Chrome Web Store
+```
+
+Load the folder as an unpacked extension in `chrome://extensions` after building.
 
 ## Contributing
 

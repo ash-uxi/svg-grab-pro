@@ -1,0 +1,26 @@
+{
+  "name": "svg-grab-pro",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Chrome extension: grab any SVG from any website",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run lint && npm run format:check && npm run test && npm run build",
+    "verify:bundle": "npm run build && git diff --exit-code contentScript.js background.js popup.js",
+    "package": "npm run build && node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "eslint": "^9.21.0",
+    "globals": "^15.15.0",
+    "jsdom": "^26.0.0",
+    "prettier": "^3.5.2",
+    "vitest": "^3.0.7"
+  },
+  "type": "module"
+}
