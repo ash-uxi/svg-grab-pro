@@ -40,3 +40,6 @@ build/
 *.tmp
 *.swp
 *.swo
+
+# Store credentials from `npx publish-extension init`
+.env.submit
