@@ -445,32 +445,6 @@
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
 
-  // src/lib/rasterize.js
-  var MIN_LONG_SIDE = 512;
-  var MAX_LONG_SIDE = 4096;
-  async function svgToPngBlob(svgText) {
-    const size = getSvgSize(svgText) ?? { width: 300, height: 150 };
-    const longSide = Math.max(size.width, size.height);
-    const scale = Math.min(MAX_LONG_SIDE, Math.max(MIN_LONG_SIDE, longSide * 2)) / longSide;
-    const width = Math.max(1, Math.round(size.width * scale));
-    const height = Math.max(1, Math.round(size.height * scale));
-    const image = new Image(width, height);
-    image.src = svgToDataUrl(svgText);
-    await image.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Canvas is unavailable");
-    context.drawImage(image, 0, 0, width, height);
-    return new Promise((resolve, reject) => {
-      canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error("PNG encoding failed")),
-        "image/png"
-      );
-    });
-  }
-
   // src/shared/clipboard.js
   function legacyCopy(text) {
     const area = document.createElement("textarea");
@@ -922,9 +896,7 @@
   // src/content-script/actions.js
   var FAILURE_MESSAGES = {
     "copy-svg": "Couldn\u2019t copy this SVG.",
-    "download-svg": "Couldn\u2019t download this SVG.",
-    "copy-png": "Couldn\u2019t copy this as a PNG.",
-    "download-png": "Couldn\u2019t export this as a PNG."
+    "download-svg": "Couldn\u2019t download this SVG."
   };
   async function runAction(action, { svg, name, ui }) {
     const pendingTimer = setTimeout(() => ui.toast("Fetching SVG\u2026", "pending"), 250);
@@ -940,14 +912,6 @@
         case "download-svg":
           downloadBlob(new Blob([await svg], { type: "image/svg+xml" }), `${name}.svg`);
           ui.toast(`Saved ${name}.svg`);
-          break;
-        case "copy-png":
-          await writeClipboard("image/png", svg.then(svgToPngBlob));
-          ui.toast(`Copied ${name} as PNG`);
-          break;
-        case "download-png":
-          downloadBlob(await svgToPngBlob(await svg), `${name}.png`);
-          ui.toast(`Saved ${name}.png`);
           break;
       }
     } catch (error) {
@@ -1249,6 +1213,7 @@
 
 .item {
   all: unset;
+  box-sizing: border-box; /* all: unset resets it, so width: 100% plus padding overflowed */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1267,18 +1232,6 @@
 .menu[data-error] .item { color: var(--faint); }
 .menu[data-error] .thumb { color: var(--danger); }
 .item:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent); }
-kbd {
-  font: 500 11px/16px var(--font);
-  color: var(--faint);
-  min-width: 18px;
-  text-align: center;
-}
-.foot {
-  padding: 6px 8px 3px;
-  font-size: 11px;
-  line-height: 15px;
-  color: var(--faint);
-}
 
 /* \u2014\u2014\u2014 Highlight \u2014\u2014\u2014 */
 .ring {
@@ -1341,6 +1294,8 @@ kbd {
 }
 .toast-icon svg { width: 14px; height: 14px; stroke-width: 2.5; }
 .toast[data-tone="error"] .toast-icon { background: var(--danger); }
+/* The dark theme's brighter green needs a dark check for contrast. */
+:host([data-scheme="dark"]) .toast[data-tone="success"] .toast-icon { color: #000; }
 .toast[data-tone="pending"] .toast-icon { background: var(--hover); }
 .toast[data-tone="pending"] .toast-icon::after {
   content: "";
@@ -1369,11 +1324,8 @@ kbd {
 
   // src/content-script/ui.js
   var MENU_ITEMS = [
-    { id: "copy-svg", label: "Copy SVG", icon: ICONS.copy, key: "c", shift: false },
-    { id: "download-svg", label: "Download SVG", icon: ICONS.download, key: "d", shift: false },
-    null,
-    { id: "copy-png", label: "Copy as PNG", icon: ICONS.image, key: "c", shift: true },
-    { id: "download-png", label: "Download PNG", icon: ICONS.download, key: "d", shift: true }
+    { id: "copy-svg", label: "Copy SVG", icon: ICONS.copy },
+    { id: "download-svg", label: "Download SVG", icon: ICONS.download }
   ];
   var HOST_STYLE = [
     "all: initial",
@@ -1411,7 +1363,7 @@ kbd {
     host.setAttribute("style", HOST_STYLE);
     const supportsPopover = "popover" in HTMLElement.prototype;
     if (supportsPopover) host.setAttribute("popover", "manual");
-    const root = host.attachShadow({ mode: "closed" });
+    const root = host.attachShadow({ mode: false ? "open" : "closed" });
     root.innerHTML = `<style>${UI_STYLES}</style>`;
     let destroyed = false;
     function mount() {
@@ -1450,10 +1402,8 @@ kbd {
       </div>
       <div class="sep"></div>
       ${MENU_ITEMS.map(
-        (item) => item ? `<button class="item" role="menuitem" tabindex="-1" data-action="${item.id}">${item.icon}<span>${item.label}</span><kbd>${item.shift ? "\u21E7" : ""}${item.key.toUpperCase()}</kbd></button>` : '<div class="sep" role="separator"></div>'
-      ).join("")}
-      <div class="sep"></div>
-      <div class="foot">Shift + right-click for the browser menu</div>`;
+        (item) => `<button class="item" role="menuitem" tabindex="-1" data-action="${item.id}">${item.icon}<span>${item.label}</span></button>`
+      ).join("")}`;
       const items = (
         /** @type {HTMLElement[]} */
         [...el.querySelectorAll(".item")]
@@ -1569,13 +1519,7 @@ kbd {
           );
           return true;
       }
-      if (event.metaKey || event.ctrlKey || event.altKey) return false;
-      const shortcut = MENU_ITEMS.find(
-        (item) => item && item.key === event.key.toLowerCase() && item.shift === event.shiftKey
-      );
-      if (!shortcut) return false;
-      pick(shortcut.id);
-      return true;
+      return false;
     }
     let ring = null;
     function highlight(target, label = "") {

@@ -3,3 +3,7 @@ contentScript.js
 background.js
 popup.js
 *.min.js
+.claude
+.codex
+docs
+store

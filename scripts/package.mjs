@@ -1,25 +1,41 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { root } from './bundle.mjs';
+import { stage } from './stage.mjs';
 
-/** Zip only what the extension needs at runtime, for Chrome Web Store upload. */
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const { version } = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
-const files = [
-  'manifest.json',
-  'background.js',
-  'contentScript.js',
-  'popup.html',
-  'popup.js',
-  'styles.css',
-  ...['dark', 'light'].flatMap((scheme) =>
-    [16, 48, 128].map((size) => `images/${scheme}/icon${size}.png`)
-  ),
-];
+/**
+ * Stage the extension into dist/extension (what `web-ext lint` and `web-ext run` use), then zip
+ * it for both stores, plus the source zip AMO asks for. `VERSION` (set by the release
+ * workflow) is stamped into the staged manifest only.
+ */
+const { version: sourceVersion } = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8'));
+const version = process.env.VERSION || sourceVersion;
+const dist = join(root, 'dist');
+const staged = join(dist, 'extension');
 
-const out = join(root, 'dist', `svg-grab-pro-${version}.zip`);
-mkdirSync(dirname(out), { recursive: true });
-rmSync(out, { force: true });
-execFileSync('zip', ['-X', '-q', out, ...files], { cwd: root, stdio: 'inherit' });
-console.log(`Packaged ${files.length} files → ${out}`);
+stage(staged, { editManifest: (manifest) => ({ ...manifest, version }) });
+
+const extensionZip = join(dist, `svg-grab-pro-${version}.zip`);
+const sourcesZip = join(dist, `svg-grab-pro-${version}-sources.zip`);
+rmSync(extensionZip, { force: true });
+execFileSync('zip', ['-X', '-q', '-r', extensionZip, '.'], { cwd: staged, stdio: 'inherit' });
+// Committed files only; reviewers rebuild with `npm ci && npm run build`.
+execFileSync(
+  'git',
+  [
+    'archive',
+    '--format=zip',
+    '-o',
+    sourcesZip,
+    'HEAD',
+    '--',
+    '.',
+    ':!.github',
+    ':!store',
+    ':!docs',
+  ],
+  { cwd: root, stdio: 'inherit' }
+);
+
+console.log(`Packaged ${version}:\n  ${extensionZip}\n  ${sourcesZip}`);

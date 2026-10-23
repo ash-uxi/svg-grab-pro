@@ -23,7 +23,7 @@
 
 ## Features
 
-✨ **Right-click any SVG** - Copy or download it straight from the page, as SVG or PNG  
+✨ **Right-click any SVG** - Copy or download it straight from the page  
 🖼️ **Every SVG on the page** - Open the popup to browse them all, logos first, and download everything as a .zip  
 🔍 **Finds what others miss** - Inline SVGs, SVG images, CSS backgrounds and masks, sprites, shadow DOM, and SVGs hidden under overlays  
 🎯 **Copies that actually work** - Styles from the page's CSS, `currentColor`, and shared gradients/sprites are baked in, so pastes render the same in Figma or your editor  
@@ -36,6 +36,10 @@
 
 1. Visit the [Chrome Web Store page](https://chromewebstore.google.com/detail/dcojkoaanbhlnealhdcdjbcoaokkngch?utm_source=item-share-cb)
 2. Confirm the installation
+
+### Firefox Add-ons
+
+Firefox 140 or later. Install it from Firefox Add-ons (link coming with the first listed release).
 
 ### Manual Installation
 
@@ -50,8 +54,7 @@
 ### Right-click
 
 1. **Right-click any SVG** on a website (logos, icons, illustrations)
-2. **Choose** Copy SVG, Download SVG, Copy as PNG or Download PNG
-3. Keyboard: `C` copy, `D` download, `⇧C` / `⇧D` for PNG, arrows + Enter to navigate, Esc to close
+2. **Choose** Copy SVG or Download SVG
 
 Hold **Shift** while right-clicking to get the browser's normal menu.
 
@@ -83,12 +86,26 @@ We take your privacy seriously:
 
 ```bash
 npm install
-npm test        # unit tests (vitest + jsdom)
-npm run build   # bundles src/ into contentScript.js, background.js and popup.js
-npm run package # builds, then zips the runtime files to dist/ for the Chrome Web Store
+npm test             # unit tests (vitest + jsdom)
+npm run build        # bundles src/ into contentScript.js, background.js and popup.js
+npm run package      # stages dist/extension, zips it for both stores, plus a sources zip for AMO
+npm run lint:firefox # Mozilla's add-on linter on dist/extension (run package first)
+npm run e2e          # smoke test in real Chrome and Firefox (npx puppeteer browsers install firefox once)
+npm run firefox      # open the extension in a temporary Firefox profile
+npm run verify       # everything CI runs except e2e
 ```
 
 Load the folder as an unpacked extension in `chrome://extensions` after building.
+
+### One codebase, Chrome and Firefox
+
+The same zip ships to both stores. `manifest.json` lists both `background.service_worker` (Chrome) and `background.scripts` (Firefox) plus `browser_specific_settings.gecko`, and the code only calls `chrome.*`. See the cross-browser rules in [CLAUDE.md](CLAUDE.md); ESLint enforces the common ones. Every pull request runs lint, unit tests, Mozilla's linter and the smoke test in both browsers.
+
+### Releasing
+
+Run **Actions → Release → Run workflow**. It re-runs CI, tags a date version such as `26.10.23` (only if there are new commits), stamps it into the packaged manifest, creates a GitHub Release with the zips, and submits to the Chrome Web Store and Firefox Add-ons. Tick **Dry run** to check store credentials without releasing.
+
+The workflow needs these secrets in a `stores` environment: `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID`, `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL`, `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`, `FIREFOX_JWT_ISSUER` and `FIREFOX_JWT_SECRET`. `npx publish-extension init` walks through creating them.
 
 ## Contributing
 

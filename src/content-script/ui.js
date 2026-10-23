@@ -2,15 +2,12 @@ import { svgToDataUrl } from '../lib/svg-url.js';
 import { ICONS } from '../shared/icons.js';
 import { UI_STYLES } from './ui-styles.js';
 
-/** @typedef {'copy-svg' | 'download-svg' | 'copy-png' | 'download-png'} MenuAction */
+/** @typedef {'copy-svg' | 'download-svg'} MenuAction */
 
-/** @type {({ id: MenuAction; label: string; icon: string; key: string; shift: boolean } | null)[]} */
+/** @type {{ id: MenuAction; label: string; icon: string }[]} */
 const MENU_ITEMS = [
-  { id: 'copy-svg', label: 'Copy SVG', icon: ICONS.copy, key: 'c', shift: false },
-  { id: 'download-svg', label: 'Download SVG', icon: ICONS.download, key: 'd', shift: false },
-  null,
-  { id: 'copy-png', label: 'Copy as PNG', icon: ICONS.image, key: 'c', shift: true },
-  { id: 'download-png', label: 'Download PNG', icon: ICONS.download, key: 'd', shift: true },
+  { id: 'copy-svg', label: 'Copy SVG', icon: ICONS.copy },
+  { id: 'download-svg', label: 'Download SVG', icon: ICONS.download },
 ];
 
 const HOST_STYLE = [
@@ -65,7 +62,8 @@ export function createUi() {
   host.setAttribute('style', HOST_STYLE);
   const supportsPopover = 'popover' in HTMLElement.prototype;
   if (supportsPopover) host.setAttribute('popover', 'manual');
-  const root = host.attachShadow({ mode: 'closed' });
+  // Open only in the smoke-test build, so the test can click the menu.
+  const root = host.attachShadow({ mode: __E2E__ ? 'open' : 'closed' });
   root.innerHTML = `<style>${UI_STYLES}</style>`;
 
   let destroyed = false;
@@ -122,13 +120,10 @@ export function createUi() {
         <div class="meta"><div class="name"></div><div class="sub"></div></div>
       </div>
       <div class="sep"></div>
-      ${MENU_ITEMS.map((item) =>
-        item
-          ? `<button class="item" role="menuitem" tabindex="-1" data-action="${item.id}">${item.icon}<span>${item.label}</span><kbd>${item.shift ? '⇧' : ''}${item.key.toUpperCase()}</kbd></button>`
-          : '<div class="sep" role="separator"></div>'
-      ).join('')}
-      <div class="sep"></div>
-      <div class="foot">Shift + right-click for the browser menu</div>`;
+      ${MENU_ITEMS.map(
+        (item) =>
+          `<button class="item" role="menuitem" tabindex="-1" data-action="${item.id}">${item.icon}<span>${item.label}</span></button>`
+      ).join('')}`;
 
     const items = /** @type {HTMLElement[]} */ ([...el.querySelectorAll('.item')]);
     el.addEventListener('pointermove', (event) => {
@@ -231,13 +226,7 @@ export function createUi() {
         if (active >= 0) pick(/** @type {MenuAction} */ (items[active].dataset.action));
         return true;
     }
-    if (event.metaKey || event.ctrlKey || event.altKey) return false;
-    const shortcut = MENU_ITEMS.find(
-      (item) => item && item.key === event.key.toLowerCase() && item.shift === event.shiftKey
-    );
-    if (!shortcut) return false;
-    pick(shortcut.id);
-    return true;
+    return false;
   }
 
   // ——— Highlight ———
