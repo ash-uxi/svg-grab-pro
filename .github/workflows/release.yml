@@ -77,23 +77,36 @@ jobs:
     if: needs.package.outputs.version
     runs-on: ubuntu-latest
     environment: stores
-    # No checkout: only the zips are needed, and repo files must not end up in an upload.
+    # The store secrets are loaded here, so the submit tool comes from package-lock.json (every
+    # dependency pinned to a checksum) with install scripts off. Only the two package files are
+    # checked out, into tools/, apart from the zips in dist/.
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: release
           path: dist
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: tools
+          persist-credentials: false
+          sparse-checkout: |
+            package.json
+            package-lock.json
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version-file: tools/package.json
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+        working-directory: tools
       - name: AMO release notes link to the GitHub Release
         run: >
           echo '{"version":{"release_notes":{"en-US":"https://github.com/${{ github.repository }}/releases/tag/${{ needs.package.outputs.version }}"}}}'
           > amo-metadata.json
       - name: Submit
-        # Keep in step with the publish-browser-extension devDependency.
         run: >
-          npx --yes --package publish-browser-extension@6.2.0 publish-extension
+          tools/node_modules/.bin/publish-extension
           --chrome-zip "dist/svg-grab-pro-$VERSION.zip"
           --firefox-zip "dist/svg-grab-pro-$VERSION.zip"
           --firefox-sources-zip "dist/svg-grab-pro-$VERSION-sources.zip"
