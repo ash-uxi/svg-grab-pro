@@ -1363,7 +1363,7 @@
     host.setAttribute("style", HOST_STYLE);
     const supportsPopover = "popover" in HTMLElement.prototype;
     if (supportsPopover) host.setAttribute("popover", "manual");
-    const root = host.attachShadow({ mode: "closed" });
+    const root = host.attachShadow({ mode: false ? "open" : "closed" });
     root.innerHTML = `<style>${UI_STYLES}</style>`;
     let destroyed = false;
     function mount() {

@@ -1,4 +1,3 @@
-
 name: Indent PR Review
 
 on:
@@ -16,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12.2"
+          python-version: '3.12.2'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -35,4 +34,3 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
         run: |
           uvx indent-ai run --workflow-id indent_pr_review
-

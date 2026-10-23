@@ -15,4 +15,13 @@ describe('isInjectableUrl', () => {
     expect(isInjectableUrl('https://chromewebstore.google.com/detail/x')).toBe(false);
     expect(isInjectableUrl(undefined)).toBe(false);
   });
+
+  it('blocks Firefox pages and Mozilla’s restricted domains', () => {
+    expect(isInjectableUrl('moz-extension://abc/popup.html')).toBe(false);
+    expect(isInjectableUrl('about:addons')).toBe(false);
+    expect(isInjectableUrl('https://addons.mozilla.org/en-US/firefox/')).toBe(false);
+    expect(isInjectableUrl('https://accounts.firefox.com/')).toBe(false);
+    expect(isInjectableUrl('https://support.mozilla.org/kb/x')).toBe(false);
+    expect(isInjectableUrl('https://www.mozilla.org/firefox/')).toBe(true);
+  });
 });

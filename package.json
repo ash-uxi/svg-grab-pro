@@ -2,17 +2,23 @@
   "name": "svg-grab-pro",
   "version": "2.0.0",
   "private": true,
-  "description": "Chrome extension: grab any SVG from any website",
+  "description": "Browser extension for Chrome and Firefox: grab any SVG from any website",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "lint": "eslint .",
+    "lint:firefox": "web-ext lint --source-dir dist/extension",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "npm run lint && npm run format:check && npm run test && npm run build",
+    "e2e": "node scripts/build-e2e.mjs && node --test --test-timeout=120000 \"e2e/*.test.js\"",
+    "verify": "npm run lint && npm run format:check && npm run test && npm run package && npm run lint:firefox",
     "verify:bundle": "npm run build && git diff --exit-code contentScript.js background.js popup.js",
-    "package": "npm run build && node scripts/package.mjs"
+    "package": "npm run build && node scripts/package.mjs",
+    "firefox": "npm run package && web-ext run --source-dir dist/extension --target firefox-desktop"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",
@@ -20,7 +26,10 @@
     "globals": "^15.15.0",
     "jsdom": "^26.0.0",
     "prettier": "^3.5.2",
-    "vitest": "^3.0.7"
+    "publish-browser-extension": "^6.2.0",
+    "puppeteer": "^25.16.0",
+    "vitest": "^3.0.7",
+    "web-ext": "^10.8.0"
   },
   "type": "module"
 }

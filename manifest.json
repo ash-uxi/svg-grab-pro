@@ -3,7 +3,14 @@
   "name": "SVG Grab Pro",
   "version": "2.0.0",
   "description": "Grab any SVG on any website. Right-click to copy or download it, or browse every SVG on the page.",
-  "minimum_chrome_version": "116",
+  "minimum_chrome_version": "121",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "svg-grab-pro@ashuxi",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  },
   "icons": {
     "16": "images/dark/icon16.png",
     "48": "images/dark/icon48.png",
@@ -27,6 +34,7 @@
     }
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
   }
 }

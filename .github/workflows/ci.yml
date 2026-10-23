@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call: # The Release workflow runs these checks first.
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, test, build, Firefox lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - name: Committed bundles match the source
+        run: npm run verify:bundle
+
+  e2e:
+    name: Smoke test (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci # Also downloads Puppeteer's Chrome.
+      - if: matrix.browser == 'firefox'
+        run: npx puppeteer browsers install firefox
+      - name: Let Chrome use its sandbox on Ubuntu 24.04
+        if: matrix.browser == 'chrome'
+        run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+      - run: npm run e2e
+        env:
+          E2E_BROWSERS: ${{ matrix.browser }}

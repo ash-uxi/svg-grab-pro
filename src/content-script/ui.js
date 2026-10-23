@@ -62,7 +62,8 @@ export function createUi() {
   host.setAttribute('style', HOST_STYLE);
   const supportsPopover = 'popover' in HTMLElement.prototype;
   if (supportsPopover) host.setAttribute('popover', 'manual');
-  const root = host.attachShadow({ mode: 'closed' });
+  // Open only in the smoke-test build, so the test can click the menu.
+  const root = host.attachShadow({ mode: __E2E__ ? 'open' : 'closed' });
   root.innerHTML = `<style>${UI_STYLES}</style>`;
 
   let destroyed = false;
