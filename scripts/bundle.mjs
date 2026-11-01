@@ -8,6 +8,7 @@ const ENTRY_POINTS = {
   contentScript: 'src/content-script/index.js',
   background: 'src/background/index.js',
   popup: 'src/popup/index.js',
+  welcome: 'src/welcome/index.js',
 };
 
 export const BUNDLES = Object.keys(ENTRY_POINTS).map((name) => `${name}.js`);

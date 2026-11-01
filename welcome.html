@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" data-state="ask">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Welcome to SVG Grab Pro</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <main class="welcome">
+      <span class="brand-mark" data-icon="brand"></span>
+
+      <div class="welcome-step" data-show="ask">
+        <h1>Right-click any SVG</h1>
+        <p class="welcome-text">
+          To add Copy SVG and Download SVG to your right-click menu on every site, SVG Grab Pro
+          needs access to the sites you visit. It only looks at a page when you right-click or open
+          it.
+        </p>
+        <button class="button welcome-action" id="allow" type="button">Allow all sites</button>
+        <p class="welcome-hint">
+          Not now? Open SVG Grab Pro on a page and right-click works there until you leave. You can
+          allow all sites later from its settings.
+        </p>
+      </div>
+
+      <div class="welcome-step" data-show="done">
+        <h1>You’re all set</h1>
+        <p class="welcome-text">
+          Right-click any SVG on any site to copy or download it. Hold Shift to get your browser’s
+          own menu.
+        </p>
+        <p class="welcome-hint">You can close this tab.</p>
+      </div>
+    </main>
+    <script src="welcome.js"></script>
+  </body>
+</html>

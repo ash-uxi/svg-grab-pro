@@ -12,6 +12,9 @@
   var ALL_SITES = { origins: ["<all_urls>"] };
   var CONTENT_SCRIPT_ID = "svg-grab-pro";
 
+  // src/shared/all-sites.js
+  var hasAllSites = () => chrome.permissions.contains(ALL_SITES);
+
   // src/shared/is-injectable-url.js
   var WEB_STORE_RE = /^https:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)\//;
   var FIREFOX_RESTRICTED_HOSTS = /* @__PURE__ */ new Set([
@@ -55,7 +58,7 @@
     });
   }
   async function syncAllSitesAccess() {
-    const granted = await chrome.permissions.contains(ALL_SITES);
+    const granted = await hasAllSites();
     const registered = await chrome.scripting.getRegisteredContentScripts({
       ids: [CONTENT_SCRIPT_ID]
     });
@@ -118,9 +121,14 @@
     const scheme = changes[STORAGE_KEYS.iconScheme]?.newValue;
     if (area === "local" && (scheme === "light" || scheme === "dark")) setIcon(scheme);
   });
-  chrome.runtime.onInstalled.addListener(() => {
+  async function showWelcome() {
+    if (await hasAllSites()) return;
+    await chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") });
+  }
+  chrome.runtime.onInstalled.addListener(({ reason }) => {
     syncAllSitesAccess();
     restoreIcon();
+    if (reason === "install") showWelcome();
   });
   chrome.runtime.onStartup.addListener(() => {
     syncAllSitesAccess();

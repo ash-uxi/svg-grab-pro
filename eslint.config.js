@@ -5,7 +5,14 @@ const CROSS_BROWSER = 'Chrome-only; see "Cross-browser rules" in CLAUDE.md.';
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
-    ignores: ['node_modules/**', 'dist/**', 'contentScript.js', 'background.js', 'popup.js'],
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'contentScript.js',
+      'background.js',
+      'popup.js',
+      'welcome.js',
+    ],
   },
   {
     languageOptions: {

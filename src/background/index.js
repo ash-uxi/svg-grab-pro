@@ -1,4 +1,5 @@
-import { ALL_SITES, CONTENT_SCRIPT_ID, MESSAGES, STORAGE_KEYS } from '../shared/constants.js';
+import { hasAllSites } from '../shared/all-sites.js';
+import { CONTENT_SCRIPT_ID, MESSAGES, STORAGE_KEYS } from '../shared/constants.js';
 import { isInjectableUrl } from '../shared/is-injectable-url.js';
 
 const MAX_SVG_BYTES = 5_000_000;
@@ -28,7 +29,7 @@ function injectInto(tabId) {
  * (so new pages get it at load) and into storage (so open tabs can react).
  */
 async function syncAllSitesAccess() {
-  const granted = await chrome.permissions.contains(ALL_SITES);
+  const granted = await hasAllSites();
   const registered = await chrome.scripting.getRegisteredContentScripts({
     ids: [CONTENT_SCRIPT_ID],
   });
@@ -103,9 +104,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && (scheme === 'light' || scheme === 'dark')) setIcon(scheme);
 });
 
-chrome.runtime.onInstalled.addListener(() => {
+/** Right-click needs "All sites", and only a click on an extension page can ask for it. */
+async function showWelcome() {
+  if (await hasAllSites()) return;
+  await chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') });
+}
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
   syncAllSitesAccess();
   restoreIcon();
+  if (reason === 'install') showWelcome();
 });
 chrome.runtime.onStartup.addListener(() => {
   syncAllSitesAccess();

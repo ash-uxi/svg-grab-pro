@@ -5,7 +5,9 @@ import { BUNDLES, root } from './bundle.mjs';
 /** Everything the extension needs at runtime besides the bundles. */
 const STATIC_FILES = [
   'popup.html',
+  'welcome.html',
   'styles.css',
+  'welcome.css',
   ...['dark', 'light'].flatMap((scheme) =>
     [16, 48, 128].map((size) => `images/${scheme}/icon${size}.png`)
   ),

@@ -192,6 +192,10 @@
   var POPUP_PORT = "svg-grab-pro:popup";
   var ALL_SITES = { origins: ["<all_urls>"] };
 
+  // src/shared/all-sites.js
+  var hasAllSites = () => chrome.permissions.contains(ALL_SITES);
+  var requestAllSites = () => chrome.permissions.request(ALL_SITES);
+
   // src/shared/clipboard.js
   function legacyCopy(text) {
     const area = document.createElement("textarea");
@@ -321,6 +325,18 @@
     )
   };
   var BRAND_MARK = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path opacity=".45" d="M12 5v14M5 12h14M7.05 7.05l9.9 9.9M7.05 16.95l9.9-9.9"/><circle cx="12" cy="4" r="1"/><circle cx="12" cy="20" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="20" cy="12" r="1"/><circle cx="6.34" cy="6.34" r="1"/><circle cx="17.66" cy="17.66" r="1"/><circle cx="6.34" cy="17.66" r="1"/><circle cx="17.66" cy="6.34" r="1"/></svg>`;
+  function fillIcons() {
+    for (const el of document.querySelectorAll("[data-icon]")) {
+      const name = (
+        /** @type {HTMLElement} */
+        el.dataset.icon
+      );
+      el.innerHTML = name === "brand" ? BRAND_MARK : ICONS[
+        /** @type {keyof typeof ICONS} */
+        name
+      ];
+    }
+  }
 
   // src/shared/is-injectable-url.js
   var WEB_STORE_RE = /^https:\/\/(chromewebstore\.google\.com|chrome\.google\.com\/webstore)\//;
@@ -388,16 +404,8 @@
   var filter = "all";
   var revealed = false;
   var port = null;
-  for (const el of document.querySelectorAll("[data-icon]")) {
-    const name = (
-      /** @type {HTMLElement} */
-      el.dataset.icon
-    );
-    el.innerHTML = name === "brand" ? BRAND_MARK : ICONS[
-      /** @type {keyof typeof ICONS} */
-      name
-    ];
-  }
+  var scanned = false;
+  fillIcons();
   function escapeHtml(text) {
     return text.replace(/[&<>"']/g, (char) => `&#${char.charCodeAt(0)};`);
   }
@@ -467,11 +475,11 @@
       });
       return;
     }
-    const notice = blocked > 0 && !allSites.checked ? `<div class="notice">
-          ${ICONS.lock}
-          <p><strong>${blocked} more SVG${blocked === 1 ? " is" : "s are"}</strong> hosted on other domains.</p>
-          <button type="button" class="notice-action" data-grant>Allow</button>
-        </div>` : "";
+    const notice = allSites.checked ? "" : `<div class="notice">
+        ${ICONS.lock}
+        <p>${blocked > 0 ? `<strong>${blocked} more SVG${blocked === 1 ? " is" : "s are"}</strong> on other domains, and right-click only works on this tab.` : "<strong>Right-click only works on this tab</strong> until you leave it."}</p>
+        <button type="button" class="notice-action" data-grant>Allow</button>
+      </div>`;
     const reveal = !revealed;
     revealed = true;
     content.innerHTML = `${notice}<ul class="grid"${reveal ? " data-reveal" : ""}>${shown.map(
@@ -618,13 +626,18 @@
     });
   }
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+  function showAllSites(granted) {
+    allSites.checked = granted;
+    if (scanned) render();
+  }
   async function grantAllSites() {
-    allSites.checked = await chrome.permissions.request(ALL_SITES);
-    if (allSites.checked && blocked > 0) scanActiveTab();
+    const granted = await requestAllSites();
+    showAllSites(granted);
+    if (granted && blocked > 0) scanActiveTab();
   }
   allSites.addEventListener("change", () => {
     if (allSites.checked) grantAllSites();
-    else chrome.permissions.remove(ALL_SITES);
+    else chrome.permissions.remove(ALL_SITES).then(hasAllSites).then(showAllSites);
   });
   async function scanActiveTab(retries = 2) {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -662,6 +675,7 @@
     connection.onMessage.addListener((message) => {
       if (message.type !== "scan") return;
       answered = true;
+      scanned = true;
       items = message.items;
       blocked = message.blocked || 0;
       render();
@@ -676,8 +690,6 @@
     theme = stored;
     applyTheme();
   });
-  chrome.permissions.contains(ALL_SITES).then((granted) => {
-    allSites.checked = granted;
-  });
+  hasAllSites().then(showAllSites);
   scanActiveTab();
 })();
