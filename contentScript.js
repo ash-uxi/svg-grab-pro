@@ -843,7 +843,7 @@
     if (response?.text) return response.text;
     if (response?.error === "no-access") {
       throw new GrabError(
-        "This SVG lives on another domain. Turn on \u201CAll sites\u201D in SVG Grab Pro to grab it.",
+        "This SVG is stored on another website. Turn on \u201CRight-click everywhere\u201D in SVG Grab Pro to grab it.",
         "no-access"
       );
     }
@@ -1702,7 +1702,7 @@
         (error) => menu.setMeta({
           name: `${name}.svg`,
           badge,
-          sub: error instanceof GrabError && error.code === "no-access" ? "Needs \u201CAll sites\u201D access" : "Couldn\u2019t read this SVG",
+          sub: error instanceof GrabError && error.code === "no-access" ? "Open SVG Grab Pro to allow" : "Couldn\u2019t read this SVG",
           error: true
         })
       );

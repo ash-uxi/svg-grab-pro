@@ -86,7 +86,7 @@ function showState({ icon, title, text, grant = false }) {
       <div class="state-icon">${ICONS[icon]}</div>
       <p class="state-title">${escapeHtml(title)}</p>
       <p class="state-text">${escapeHtml(text)}</p>
-      ${grant ? '<button type="button" class="notice-action state-action" data-grant>Allow all sites</button>' : ''}
+      ${grant ? '<button type="button" class="notice-action state-action" data-grant>Allow everywhere</button>' : ''}
     </div>`;
 }
 
@@ -120,8 +120,8 @@ function render() {
   if (items.length === 0 && blocked > 0 && !allSites.checked) {
     showState({
       icon: 'lock',
-      title: `${blocked} SVG${blocked === 1 ? '' : 's'} on other domains`,
-      text: 'This page loads its SVGs from another domain. Allow access to grab them.',
+      title: `${blocked} SVG${blocked === 1 ? ' is' : 's are'} stored on another website`,
+      text: 'SVG Grab Pro needs your permission to fetch them from there.',
       grant: true,
     });
     return;
@@ -151,10 +151,10 @@ function render() {
         ${ICONS.lock}
         <p>${
           blocked > 0
-            ? `<strong>${blocked} more SVG${blocked === 1 ? ' is' : 's are'}</strong> on other domains, and right-click only works on this tab.`
-            : '<strong>Right-click only works on this tab</strong> until you leave it.'
+            ? `<strong>${blocked} more SVG${blocked === 1 ? ' is' : 's are'}</strong> stored on another website, and right-click only works on this page.`
+            : '<strong>Right-click only works on this page</strong> until you reload or leave it.'
         }</p>
-        <button type="button" class="notice-action" data-grant>Allow</button>
+        <button type="button" class="notice-action" data-grant>Allow everywhere</button>
       </div>`;
 
   // Tiles stagger in once, when results first arrive; filter switches are instant.

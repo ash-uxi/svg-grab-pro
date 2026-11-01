@@ -120,7 +120,7 @@ function start() {
           badge,
           sub:
             error instanceof GrabError && error.code === 'no-access'
-              ? 'Needs “All sites” access'
+              ? 'Open SVG Grab Pro to allow'
               : 'Couldn’t read this SVG',
           error: true,
         })

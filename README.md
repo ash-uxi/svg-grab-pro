@@ -62,9 +62,9 @@ Hold **Shift** while right-clicking to get the browser's normal menu.
 
 Click the toolbar icon (or press `Alt+Shift+S`) to see every SVG on the current page. Click a tile to copy it, hover for SVG/PNG downloads, and hover any tile to outline it on the page. **Download all** saves a .zip.
 
-### All sites
+### Right-click everywhere
 
-By default SVG Grab Pro only runs on a tab after you open its popup there. A welcome tab on install, and a notice in the popup, offer to turn on **All sites**. Turn it on to right-click SVGs on any page without opening the popup first; this also lets it fetch SVG files hosted on other domains (CDNs) that the page's own CORS rules would block.
+By default SVG Grab Pro only runs on a tab after you open its popup there. A welcome tab on install, and a notice in the popup, offer to turn on **Right-click everywhere** (the optional `<all_urls>` permission). Turn it on to right-click SVGs on any page without opening the popup first; this also lets it fetch SVG files hosted on other domains (CDNs) that the page's own CORS rules would block.
 
 ## How it Works
 
