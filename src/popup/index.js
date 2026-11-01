@@ -333,7 +333,7 @@ async function scanActiveTab(retries = 2) {
     showState({
       icon: 'lock',
       title: 'This page is off-limits',
-      text: 'Chrome doesn’t let extensions read browser pages or the Web Store. Open any website to grab its SVGs.',
+      text: 'Your browser doesn’t let extensions read its own pages or extension stores. Open any website to grab its SVGs.',
     });
     return;
   }
