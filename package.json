@@ -16,7 +16,7 @@
     "test:watch": "vitest",
     "e2e": "node scripts/build-e2e.mjs && node --test --test-timeout=120000 \"e2e/*.test.js\"",
     "verify": "npm run lint && npm run format:check && npm run test && npm run package && npm run lint:firefox",
-    "verify:bundle": "npm run build && git diff --exit-code contentScript.js background.js popup.js",
+    "verify:bundle": "npm run build && git diff --exit-code contentScript.js background.js popup.js welcome.js",
     "package": "npm run build && node scripts/package.mjs",
     "firefox": "npm run package && web-ext run --source-dir dist/extension --target firefox-desktop"
   },

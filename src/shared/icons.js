@@ -90,3 +90,11 @@ export const ICONS = {
 
 /** The SVG Grab Pro mark (the asterisk-of-nodes logo), drawn in `currentColor`. */
 export const BRAND_MARK = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path opacity=".45" d="M12 5v14M5 12h14M7.05 7.05l9.9 9.9M7.05 16.95l9.9-9.9"/><circle cx="12" cy="4" r="1"/><circle cx="12" cy="20" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="20" cy="12" r="1"/><circle cx="6.34" cy="6.34" r="1"/><circle cx="17.66" cy="17.66" r="1"/><circle cx="6.34" cy="17.66" r="1"/><circle cx="17.66" cy="6.34" r="1"/></svg>`;
+
+/** Fill every `[data-icon]` element with its icon (`data-icon="brand"` for the mark). */
+export function fillIcons() {
+  for (const el of document.querySelectorAll('[data-icon]')) {
+    const name = /** @type {HTMLElement} */ (el).dataset.icon;
+    el.innerHTML = name === 'brand' ? BRAND_MARK : ICONS[/** @type {keyof typeof ICONS} */ (name)];
+  }
+}

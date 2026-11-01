@@ -37,7 +37,7 @@ async function fetchViaBackground(url) {
   if (response?.text) return response.text;
   if (response?.error === 'no-access') {
     throw new GrabError(
-      'This SVG lives on another domain. Turn on “All sites” in SVG Grab Pro to grab it.',
+      'This SVG is stored on another website. Turn on “Right-click everywhere” in SVG Grab Pro to grab it.',
       'no-access'
     );
   }

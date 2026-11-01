@@ -2,11 +2,12 @@ import { svgToPngBlob } from '../lib/rasterize.js';
 import { svgToDataUrl } from '../lib/svg-url.js';
 import { artworkTone } from '../lib/tone.js';
 import { createZip } from '../lib/zip.js';
+import { hasAllSites, requestAllSites } from '../shared/all-sites.js';
 import { ALL_SITES, POPUP_PORT, STORAGE_KEYS } from '../shared/constants.js';
 import { copyText } from '../shared/clipboard.js';
 import { downloadBlob } from '../shared/download.js';
 import { formatBytes, formatSize } from '../shared/format.js';
-import { BRAND_MARK, ICONS } from '../shared/icons.js';
+import { ICONS, fillIcons } from '../shared/icons.js';
 import { isInjectableUrl } from '../shared/is-injectable-url.js';
 import { getStoredTheme, resolveScheme } from '../shared/theme.js';
 
@@ -37,11 +38,10 @@ let filter = 'all';
 let revealed = false;
 /** @type {chrome.runtime.Port | null} */
 let port = null;
+/** The page has answered a scan, so `render()` has something to show. */
+let scanned = false;
 
-for (const el of document.querySelectorAll('[data-icon]')) {
-  const name = /** @type {HTMLElement} */ (el).dataset.icon;
-  el.innerHTML = name === 'brand' ? BRAND_MARK : ICONS[/** @type {keyof typeof ICONS} */ (name)];
-}
+fillIcons();
 
 // ——— Small UI helpers ———
 
@@ -86,7 +86,7 @@ function showState({ icon, title, text, grant = false }) {
       <div class="state-icon">${ICONS[icon]}</div>
       <p class="state-title">${escapeHtml(title)}</p>
       <p class="state-text">${escapeHtml(text)}</p>
-      ${grant ? '<button type="button" class="notice-action state-action" data-grant>Allow all sites</button>' : ''}
+      ${grant ? '<button type="button" class="notice-action state-action" data-grant>Allow everywhere</button>' : ''}
     </div>`;
 }
 
@@ -120,8 +120,8 @@ function render() {
   if (items.length === 0 && blocked > 0 && !allSites.checked) {
     showState({
       icon: 'lock',
-      title: `${blocked} SVG${blocked === 1 ? '' : 's'} on other domains`,
-      text: 'This page loads its SVGs from another domain. Allow access to grab them.',
+      title: `${blocked} SVG${blocked === 1 ? ' is' : 's are'} stored on another website`,
+      text: 'SVG Grab Pro needs your permission to fetch them from there.',
       grant: true,
     });
     return;
@@ -143,14 +143,19 @@ function render() {
     return;
   }
 
-  const notice =
-    blocked > 0 && !allSites.checked
-      ? `<div class="notice">
-          ${ICONS.lock}
-          <p><strong>${blocked} more SVG${blocked === 1 ? ' is' : 's are'}</strong> hosted on other domains.</p>
-          <button type="button" class="notice-action" data-grant>Allow</button>
-        </div>`
-      : '';
+  // Without "All sites", only this popup puts the right-click menu on a page, and only until
+  // the tab navigates.
+  const notice = allSites.checked
+    ? ''
+    : `<div class="notice">
+        ${ICONS.lock}
+        <p>${
+          blocked > 0
+            ? `<strong>${blocked} more SVG${blocked === 1 ? ' is' : 's are'}</strong> stored on another website, and right-click only works on this page.`
+            : '<strong>Right-click only works on this page</strong> until you reload or leave it.'
+        }</p>
+        <button type="button" class="notice-action" data-grant>Allow everywhere</button>
+      </div>`;
 
   // Tiles stagger in once, when results first arrive; filter switches are instant.
   const reveal = !revealed;
@@ -306,15 +311,21 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme
 
 // ——— All-sites access ———
 
-// The service worker reacts to permission changes and (un)registers the content script.
+/** @param {boolean} granted */
+function showAllSites(granted) {
+  allSites.checked = granted;
+  if (scanned) render();
+}
+
 async function grantAllSites() {
-  allSites.checked = await chrome.permissions.request(ALL_SITES);
-  if (allSites.checked && blocked > 0) scanActiveTab();
+  const granted = await requestAllSites();
+  showAllSites(granted);
+  if (granted && blocked > 0) scanActiveTab();
 }
 
 allSites.addEventListener('change', () => {
   if (allSites.checked) grantAllSites();
-  else chrome.permissions.remove(ALL_SITES);
+  else chrome.permissions.remove(ALL_SITES).then(hasAllSites).then(showAllSites);
 });
 
 // ——— Startup ———
@@ -361,6 +372,7 @@ async function scanActiveTab(retries = 2) {
   connection.onMessage.addListener((message) => {
     if (message.type !== 'scan') return;
     answered = true;
+    scanned = true;
     items = message.items;
     blocked = message.blocked || 0;
     render();
@@ -377,7 +389,5 @@ getStoredTheme().then((stored) => {
   theme = stored;
   applyTheme();
 });
-chrome.permissions.contains(ALL_SITES).then((granted) => {
-  allSites.checked = granted;
-});
+hasAllSites().then(showAllSites);
 scanActiveTab();

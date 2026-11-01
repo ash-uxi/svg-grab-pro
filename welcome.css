@@ -1,0 +1,90 @@
+/* The welcome tab reuses styles.css (tokens, buttons, brand mark) and undoes the popup's fixed
+   size and grid. */
+
+html,
+body {
+  width: auto;
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+}
+
+body {
+  display: grid;
+  grid-template-rows: none;
+  place-items: center;
+  min-height: 100vh;
+  padding: 48px 16px;
+  font-size: 14px;
+  line-height: 21px;
+  user-select: auto;
+}
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 420px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.welcome .brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+}
+
+.welcome .brand-mark svg {
+  width: 28px;
+  height: 28px;
+}
+
+.welcome-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: tile-in 320ms var(--ease-out) both;
+}
+
+:root:not([data-state='ask']) [data-show='ask'],
+:root:not([data-state='done']) [data-show='done'] {
+  display: none;
+}
+
+.welcome h1 {
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+}
+
+.welcome-text {
+  color: var(--text-2);
+}
+
+.welcome-hint {
+  font-size: 12.5px;
+  line-height: 18px;
+  color: var(--text-3);
+}
+
+.welcome-action {
+  height: 36px;
+  margin: 12px 0 8px;
+  padding: 0 16px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+}
+
+.welcome-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent), #000 8%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-step {
+    animation-name: fade-in;
+  }
+}
